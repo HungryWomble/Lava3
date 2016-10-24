@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3", "Lava3\Lava3.csproj", "{6AFB8A2D-2DF1-4134-B625-8865C1D8A2F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3.Core", "Lava3.Core\Lava3.Core.csproj", "{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3.Test", "Lava3.Test\Lava3.Test.csproj", "{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6AFB8A2D-2DF1-4134-B625-8865C1D8A2F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AFB8A2D-2DF1-4134-B625-8865C1D8A2F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AFB8A2D-2DF1-4134-B625-8865C1D8A2F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AFB8A2D-2DF1-4134-B625-8865C1D8A2F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -38,8 +38,8 @@ namespace Lava3.Test
             }
             target.SaveAndClose();
 
-            target = new ExcelFile();
-            target.ShowFile(path);
+            //target = new ExcelFile();
+            //target.ShowFile(path);
 
 
             Assert.IsNull(target.Package);

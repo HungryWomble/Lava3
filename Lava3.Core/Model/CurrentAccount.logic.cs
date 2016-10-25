@@ -39,7 +39,7 @@ namespace Lava3.Core.Model
         public CurrentAccount( ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
         {
             RowNumber = rownum;
-            Date = Common.ReplaceNullOrEmptyDateTime(sheet.Cells[rownum, ch["Date"].ColumnNumber].Value);
+            Date = new ColumnDateTime(sheet, rownum, ch["Date"]);
             Description = new ColumnString( sheet, rownum, ch["Description"]);
             Debit = new ColumnDecimal( sheet, rownum, ch["Debit"]);
             Credit = new ColumnDecimal( sheet, rownum, ch["Credit"]);
@@ -47,7 +47,11 @@ namespace Lava3.Core.Model
             MonthlyBalence = new ColumnDecimal( sheet, rownum, ch["Monthly"]);
             YearlyBalence = new ColumnDecimal( sheet, rownum, ch["Yearly"]);
             Category = new ColumnString( sheet, rownum, ch["Category Override"]);
-            Notes = new ColumnString( sheet, rownum, ch["Notes"]);
+            Notes = new ColumnString(sheet, rownum, ch["Notes"]);
+            if (sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink != null)
+            {
+                NotesHyperLink = sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink.OriginalUri;
+            }
             if (Date == null)
             {
                 IsDivider = true;
@@ -74,9 +78,10 @@ namespace Lava3.Core.Model
         /// <returns></returns>
         public void Categorise(IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
         {
-            if (string.IsNullOrEmpty(Description.Value)) return;
+            if (string.IsNullOrEmpty(Description?.Value)
+                || Description.Value.Equals(ExcelFile.eDescriptionKeys.StartingBalance)) return;
             //
-            Category category = null;
+            Category localCategory = null;
             IEnumerable<Category> c;
             c = categories.Where(w => w.Description.Value.Equals(Description.Value,
                                                            StringComparison.CurrentCultureIgnoreCase));
@@ -91,7 +96,7 @@ namespace Lava3.Core.Model
                         var regex = new Regex(item.RegEx.Value, RegexOptions.IgnoreCase);
                         if (regex.Match(Description.Value).Length > 0)
                         {
-                            category = item;
+                            localCategory = item;
                             break;
                         }
                     }
@@ -99,13 +104,13 @@ namespace Lava3.Core.Model
             }
             else
             {
-                category = c.Single();
+                localCategory = c.Single();
             }
-            if (category!=null &&
+            if (localCategory!=null &&
                     ccRows != null &&
-                    category.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))
+                    localCategory.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))
             {
-                IEnumerable<CreditCard> paid = ccRows.Where(w => w.PaidDate.Value == this.Date);
+                IEnumerable<CreditCard> paid = ccRows.Where(w => w.PaidDate.Value == this.Date.Value);
                 decimal? paidTotal = 0;
                 if (paid == null || !paid.Any())
                 {
@@ -120,15 +125,20 @@ namespace Lava3.Core.Model
                     }
                 }
             }
-            else if (category != null &&
-                    !category.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))
+            else if (localCategory != null &&
+                    !localCategory.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))
             {
-                Category.Value = Common.ReplaceIfEmpty(Category.Value, category.AccountingCategory.Value);
-                if (!string.IsNullOrEmpty(Notes.Value))
+                Category = Common.ReplaceIfEmpty(Category, localCategory.AccountingCategory);
+                //TransactionDescription = category.Description;
+                if (!string.IsNullOrEmpty(localCategory.Notes.Value))
                 {
-                    Notes = category.Notes;
-                    NotesHyperLink = category.NotesHyperLink;
+                    Notes = Common.ReplaceIfEmpty(Notes, localCategory.Notes); ;
+                    NotesHyperLink = localCategory.NotesHyperLink;
                 }
+            }
+            if (string.IsNullOrEmpty(Category.Value))
+            {
+                Category.Errors.Add("Missing Category");
             }
 
 

@@ -6,7 +6,7 @@ namespace Lava3.Core.Model
     public partial class CurrentAccount
     {
         public int RowNumber { get; set; }
-        public DateTime? Date { get; set; }
+        public ColumnDateTime Date { get; set; }
         public ColumnString Description { get; set; }
         public ColumnDecimal Debit { get; set; }
         public ColumnDecimal Credit { get; set; }

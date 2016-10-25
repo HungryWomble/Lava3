@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Lava3.Core.DataTypes;
 using OfficeOpenXml;
+using System.Globalization;
 
 namespace Lava3.Core
 {
@@ -141,20 +142,21 @@ namespace Lava3.Core
 
         #endregion
 
-        internal static void DeleteRows( ExcelWorksheet sheet)
+        internal static void DeleteRows( ExcelWorksheet sheet, int startingRow = 1)
         {
             ClearComments( sheet);
-            for (int i = sheet.Dimension.Rows; i > 1; i--)
+            for (int i = sheet.Dimension.Rows; i > startingRow; i--)
             {
                 sheet.DeleteRow(i);
             }
         }
         #region update cell
+
         public static void UpdateCellDate( ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
         {
             if (field?.Value==null) return;
             sheet.Cells[rownumber, field.ColumnNumber].Value = ((DateTime)field.Value).ToOADate();
-
+            sheet.Cells[rownumber, field.ColumnNumber].Style.Numberformat.Format = DateTimeFormatInfo.CurrentInfo.ShortDatePattern;
             if (field.Errors.Any())
             {
                 foreach (string item in field.Errors)
@@ -208,6 +210,7 @@ namespace Lava3.Core
                 cellRange.Value = cell.Value;
             }
         }
+
 
         #endregion
     }

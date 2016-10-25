@@ -60,7 +60,7 @@ namespace Lava3.Test
 
             using (var Package = new ExcelPackage(new FileInfo(path)))
             {
-                ExcelWorksheet sheet = Package.Workbook.Worksheets[ExcelFile.WorkSheetLabels.CategoryLookup];
+                ExcelWorksheet sheet = Package.Workbook.Worksheets[ExcelFile.eWorkSheetLabels.CategoryLookup];
                 Assert.AreEqual("Plural sight", sheet.Cells[2, 3].Text);
                 Assert.IsNotNull(sheet.Cells[3,1].Comment.Text);
             }

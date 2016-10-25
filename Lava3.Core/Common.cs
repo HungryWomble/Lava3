@@ -151,45 +151,35 @@ namespace Lava3.Core
             }
         }
         #region update cell
-
+        private static void WriteErrors(ExcelWorksheet sheet, int rownum,int colnum,List<string> errors)
+        {
+            if (!errors.Any()) return;
+            StringBuilder sb = new StringBuilder();
+            foreach (string error in errors)
+            {
+                sb.AppendLine(error);
+            }
+            SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
+        }
         public static void UpdateCellDate( ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
         {
             if (field?.Value==null) return;
             sheet.Cells[rownumber, field.ColumnNumber].Value = ((DateTime)field.Value).ToOADate();
             sheet.Cells[rownumber, field.ColumnNumber].Style.Numberformat.Format = DateTimeFormatInfo.CurrentInfo.ShortDatePattern;
-            if (field.Errors.Any())
-            {
-                foreach (string item in field.Errors)
-                {
-                    SetComment(sheet, rownumber, field.ColumnNumber, item, Colours.ErrorColour);
-                }
-            }
+
+            WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
         }
         public static void UpdateCellString( ExcelWorksheet sheet, int rownumber, ColumnString field)
         {
             if (field==null || string.IsNullOrEmpty(field.Value)) return;
-            sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.Trim().ToString();
-
-            if (field.Errors.Any())
-            {
-                foreach (string item in field.Errors)
-                {
-                    SetComment(sheet, rownumber, field.ColumnNumber, item, Colours.ErrorColour);
-                }
-            }
+            sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.TrimEnd('\r', '\n');
+            WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);           
         }
         public static void UpdateCellDecimal( ExcelWorksheet sheet, int rownumber, ColumnDecimal field)
         {
             if (field?.Value==null) return;
             sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value;
-
-            if (field.Errors.Any())
-            {
-                foreach (string item in field.Errors)
-                {
-                    SetComment(sheet, rownumber, field.ColumnNumber, item, Colours.ErrorColour);
-                }
-            }
+            WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
         }
 
         internal static void UpdateHyperLink(ExcelWorksheet sheet, 

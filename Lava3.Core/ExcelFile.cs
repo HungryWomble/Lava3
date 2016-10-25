@@ -377,7 +377,7 @@ namespace Lava3.Core
 
             }
             //Create conditional formating
-            int categoryColumn = CreditCardRows.First().Category.ColumnNumber;
+            int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
             ExcelAddress categoryAddress = new ExcelAddress(2,
                                                             categoryColumn,
                                                             rownum - 1,
@@ -385,6 +385,8 @@ namespace Lava3.Core
 
             var cf = _SheetCreditCard.ConditionalFormatting.AddContainsBlanks(categoryAddress);
             cf.Style.Fill.BackgroundColor.Color = Common.Colours.ErrorColour;
+            //Wrap category text
+            _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
         }
     }
 }

@@ -36,17 +36,17 @@ namespace Lava3.Core.Model
         }
 
 
-        public CurrentAccount( ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
+        public CurrentAccount(ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
         {
             RowNumber = rownum;
             Date = new ColumnDateTime(sheet, rownum, ch["Date"]);
-            Description = new ColumnString( sheet, rownum, ch["Description"]);
-            Debit = new ColumnDecimal( sheet, rownum, ch["Debit"]);
-            Credit = new ColumnDecimal( sheet, rownum, ch["Credit"]);
-            Balence = new ColumnDecimal( sheet, rownum, ch["Balence"]);
-            MonthlyBalence = new ColumnDecimal( sheet, rownum, ch["Monthly"]);
-            YearlyBalence = new ColumnDecimal( sheet, rownum, ch["Yearly"]);
-            Category = new ColumnString( sheet, rownum, ch["Category Override"]);
+            Description = new ColumnString(sheet, rownum, ch["Description"]);
+            Debit = new ColumnDecimal(sheet, rownum, ch["Debit"]);
+            Credit = new ColumnDecimal(sheet, rownum, ch["Credit"]);
+            Balence = new ColumnDecimal(sheet, rownum, ch["Balence"]);
+            MonthlyBalence = new ColumnDecimal(sheet, rownum, ch["Monthly"]);
+            YearlyBalence = new ColumnDecimal(sheet, rownum, ch["Yearly"]);
+            Category = new ColumnString(sheet, rownum, ch["Category Override"]);
             Notes = new ColumnString(sheet, rownum, ch["Notes"]);
             if (sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink != null)
             {
@@ -106,22 +106,39 @@ namespace Lava3.Core.Model
             {
                 localCategory = c.Single();
             }
-            if (localCategory!=null &&
+            if (localCategory != null &&
                     ccRows != null &&
                     localCategory.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))
             {
-                IEnumerable<CreditCard> paid = ccRows.Where(w => w.PaidDate.Value == this.Date.Value);
+                IEnumerable<CreditCard> ccTransactions = ccRows.Where(w => w.PaidDate.Value == this.Date.Value);
                 decimal? paidTotal = 0;
-                if (paid == null || !paid.Any())
+                if (ccTransactions == null || !ccTransactions.Any())
                 {
                     Category.Errors.Add("Can not find any credit card transaction for a payment on this date.");
                 }
-                else if (paid != null && paid.Any())
+                else if (ccTransactions != null && ccTransactions.Any())
                 {
-                    paidTotal = paid.Sum(s => s.TransactionAmount.Value);
-                    if (paidTotal != this.Debit.Value)
+                    paidTotal = ccTransactions.Sum(s => s.TransactionAmount.Value);
+                    if (paidTotal + this.Debit.Value != 0)
                     {
-                        Debit.Errors.Add("The debit value does not match the sum of the associated credit card purchases.");
+                        string errorMessage = "The value debited and the sum of the transactions in the catagory do not match.";
+                        Debit.Errors.Add(errorMessage);
+                        Category.Errors.Add(errorMessage);
+                    }
+                    StringBuilder sb = new StringBuilder();
+                    bool HasNoCategory=false;
+                    foreach (CreditCard item in ccTransactions)
+                    {
+                        if(string.IsNullOrEmpty(item.Category.Value))
+                        {
+                            HasNoCategory = true;
+                        }
+                        sb.AppendLine($" {item.TransactionAmount.Value:N2}, {item.Category.Value}");
+                    }
+                    Category.Value = sb.ToString().TrimEnd('\r', '\n');
+                    if (HasNoCategory)
+                    {
+                        Category.Errors.Add("One or more transactions have not been categorised.");
                     }
                 }
             }

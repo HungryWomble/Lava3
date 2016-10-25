@@ -20,10 +20,11 @@ namespace Lava3.Test
         public void ProcessCurrentAccount01()
         {
 
-
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Testfiles\\ProcessCurrentAccount01.xlsx");
             File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Testfiles\\test.xlsx"), path, true);
+            
             var target = new ExcelFile();
+            target.KillAllExcel();
 
             target.OpenPackage(path);
             target.ProcessCurrentAccount();
@@ -32,14 +33,6 @@ namespace Lava3.Test
             target.SaveAndClose();
             //Check the credit card
             Assert.IsNull(target.Package);
-           
-
-
-            //for (int i = 1; i < 7; i++)
-            //{
-            //    Assert.AreEqual(actualCurrentAccountRows[i].Balence.Value, actualCurrentAccountRows[i].YearlyBalence.Value);
-            //}
-
 
             target = new ExcelFile();
             target.ShowFile(path);

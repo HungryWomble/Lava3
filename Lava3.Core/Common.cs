@@ -171,7 +171,8 @@ namespace Lava3.Core
         }
         public static void UpdateCellString( ExcelWorksheet sheet, int rownumber, ColumnString field)
         {
-            if (field==null || string.IsNullOrEmpty(field.Value)) return;
+            if (field==null || (string.IsNullOrEmpty(field.Value) &&
+                                !field.Errors.Any())) return;
             sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.TrimEnd('\r', '\n');
             WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);           
         }

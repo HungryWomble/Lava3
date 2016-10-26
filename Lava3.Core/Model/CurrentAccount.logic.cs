@@ -106,6 +106,7 @@ namespace Lava3.Core.Model
             {
                 localCategory = c.Single();
             }
+
             if (localCategory != null &&
                     ccRows != null &&
                     localCategory.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))

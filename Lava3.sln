@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3", "Lava3\Lava3.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3.Core", "Lava3.Core\Lava3.Core.csproj", "{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3.Test", "Lava3.Test\Lava3.Test.csproj", "{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lava3.Core.Test", "Lava3.Core.Test\Lava3.Core.Test.csproj", "{F6BDECA9-63B5-4F99-AA19-2F99720B08E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{05B5DDAF-BA66-470D-ACD3-2C2E73B62961}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FC5E38AC-7D04-4C51-9262-3F3E1BAF5CF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6BDECA9-63B5-4F99-AA19-2F99720B08E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6BDECA9-63B5-4F99-AA19-2F99720B08E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6BDECA9-63B5-4F99-AA19-2F99720B08E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6BDECA9-63B5-4F99-AA19-2F99720B08E1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

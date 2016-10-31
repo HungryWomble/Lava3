@@ -31,17 +31,23 @@ namespace Lava3.Core.Model
             }
             else
             {
-                return $"{RowNumber} {Date} {Category} {Description} {MonthlyBalence}";
+                return $"{RowNumber} {Date} {Category} {Description} {Credit.Value-Debit.Value}";
             }
         }
 
-
+        public CurrentAccount()
+        {
+        }
         public CurrentAccount(ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
         {
             RowNumber = rownum;
             Date = new ColumnDateTime(sheet, rownum, ch["Date"]);
             Description = new ColumnString(sheet, rownum, ch["Description"]);
             Debit = new ColumnDecimal(sheet, rownum, ch["Debit"]);
+            if(Debit.Value!=null)
+            {
+                Debit.Value = - 1 * Math.Abs((decimal)Debit.Value);
+            }
             Credit = new ColumnDecimal(sheet, rownum, ch["Credit"]);
             Balence = new ColumnDecimal(sheet, rownum, ch["Balence"]);
             MonthlyBalence = new ColumnDecimal(sheet, rownum, ch["Monthly"]);
@@ -154,10 +160,10 @@ namespace Lava3.Core.Model
                     NotesHyperLink = localCategory.NotesHyperLink;
                 }
             }
-            if (string.IsNullOrEmpty(Category.Value))
-            {
-                Category.Errors.Add("Missing Category");
-            }
+            //if (string.IsNullOrEmpty(Category.Value))
+            //{
+            //    Category.Errors.Add("Missing Category");
+            //}
 
 
         }

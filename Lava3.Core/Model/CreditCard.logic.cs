@@ -32,6 +32,10 @@ namespace Lava3.Core.Model
             {
                 Categorise(categoryRows);
             }
+            if(PaidDate.Value!=null && StatementDate.Value==null)
+            {
+                StatementDate.Errors.Add("Statement date is missing.");
+            }
         }
 
         public override string ToString()

@@ -105,6 +105,7 @@ namespace Lava3.Core
                 CurrentAccount row = new CurrentAccount(_SheetCurrentAccount, columnHeaders, rownum, CategoryRows, CreditCardRows);
 
                 rownum++;
+                if (string.IsNullOrEmpty(row.Description.Value)) continue;
                 Rows.Add(row);
             }
             //Remove boundries and monthly totals
@@ -116,34 +117,82 @@ namespace Lava3.Core
                 }
             }
 
-            
+
             // sort by transaction date
             Rows = Rows.OrderBy(o => o.Date.Value)
                                                    .ToList();
             //Set the monthly and annual running totals.
+            var retval = new List<CurrentAccount>();
             int currentMonth = -1;
             int previousMonth = ((DateTime)Rows[1].Date.Value).Month;
             Decimal? MonthlyTotal = 0m;
+            int NewRowNumber = 0;
+            retval.Add(Rows[0]);
+            decimal? MonthlyDebit = 0;
+            decimal? MonthlyCredit = 0;
             for (int i = 1; i < Rows.Count; i++)
             {
                 var previous = Rows[i - 1];
                 var current = Rows[i];
                 previousMonth = ((DateTime)previous.Date.Value).Month;
                 currentMonth = ((DateTime)current.Date.Value).Month;
+                NewRowNumber++;
                 if (currentMonth != previousMonth)
                 {
+                    var monthSummary = new CurrentAccount()
+                    {
+                        IsMonthlySummary = true,
+                        RowNumber = NewRowNumber,
+                        Notes = new ColumnString() { ColumnNumber = current.Notes.ColumnNumber },
+                        Debit = new ColumnDecimal()
+                        {
+                            ColumnNumber = current.Notes.ColumnNumber,
+                            Value = MonthlyDebit
+                        },
+                        Credit = new ColumnDecimal()
+                        {
+                            ColumnNumber = current.Notes.ColumnNumber,
+                            Value = MonthlyCredit
+                        }
+                    };
+                    retval.Add(monthSummary);
+                    //
+                    NewRowNumber++;
+
+                    retval.Add(new CurrentAccount()
+                    {
+                        IsDivider = true,
+                        RowNumber = NewRowNumber,
+                        Notes = new ColumnString() { ColumnNumber = current.Notes.ColumnNumber }
+                    });
+                    NewRowNumber++;
+
                     MonthlyTotal = 0m;
+                    MonthlyDebit = 0;
+                    MonthlyCredit = 0;
                 }
-                decimal? transactionBalence = current.Credit.Value - current.Debit.Value;
+                current.RowNumber = NewRowNumber;
+                decimal? transactionBalence = current.Credit.Value + current.Debit.Value;
                 MonthlyTotal += transactionBalence;
 
 
-                Rows[i].YearlyBalence.Value = previous.YearlyBalence.Value
+                current.YearlyBalence.Value = previous.YearlyBalence.Value
                                                             + transactionBalence;
-                Rows[i].MonthlyBalence.Value = MonthlyTotal;
+                current.MonthlyBalence.Value = MonthlyTotal;
 
+                MonthlyCredit = MonthlyCredit + current.Credit.Value;
+                MonthlyDebit = MonthlyDebit + current.Debit.Value;
+                //Validation
+                if (current.YearlyBalence.Value != current.Balence.Value)
+                {
+                    string msg = $"Balance and Yearly Balence do not match {current.Balence} != {current.YearlyBalence}";
+                    current.YearlyBalence.Errors.Add(msg);
+                    current.Balence.Errors.Add(msg);
+                }
+
+                retval.Add(Rows[i]);
             }
-            CurrentAccountRows = Rows;
+            CurrentAccountRows = retval;
         }
         /// <summary>
         /// Load the credit card into memory
@@ -336,7 +385,7 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.VatContent);
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.Postage);
                 Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
-               
+
             }
             //Create conditional formating
             int categoryColumn = CreditCardRows.First().Category.ColumnNumber;
@@ -354,8 +403,8 @@ namespace Lava3.Core
                 CreditCardRows == null ||
                 CurrentAccountRows == null) return;
 
-            Common.DeleteRows(_SheetCurrentAccount,2);   
-            
+            Common.DeleteRows(_SheetCurrentAccount, 2);
+
             //Create styles
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCurrentAccount, stylenameHyperlink);
@@ -365,6 +414,17 @@ namespace Lava3.Core
             foreach (CurrentAccount item in CurrentAccountRows)
             {
                 rownum++;
+                string CategoryMissing = "Category missing";
+                if (item.IsStartingBalence)
+                {
+                    Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.StartingBalance, true);
+                    CategoryMissing = null;
+                }
+                else if (item.IsDivider || item.IsMonthlySummary)
+                {
+                    Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.DividerColour, true);
+                    CategoryMissing = null;
+                }
                 Common.UpdateCellDate(_SheetCurrentAccount, rownum, item.Date);
                 Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Description);
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
@@ -372,21 +432,21 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
-                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category);
+                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
                 Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
 
-            }
-            //Create conditional formating
-            int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
-            ExcelAddress categoryAddress = new ExcelAddress(2,
-                                                            categoryColumn,
-                                                            rownum - 1,
-                                                            categoryColumn);
+                //Create conditional formating
+                int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
+                ExcelAddress categoryAddress = new ExcelAddress(rownum,
+                                                                categoryColumn,
+                                                                rownum,
+                                                                categoryColumn);
 
-            var cf = _SheetCreditCard.ConditionalFormatting.AddContainsBlanks(categoryAddress);
-            cf.Style.Fill.BackgroundColor.Color = Common.Colours.ErrorColour;
-            //Wrap category text
-            _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+
+                //Wrap category text
+                _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+
+            }
         }
     }
 }

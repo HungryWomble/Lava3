@@ -55,20 +55,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="TestFiles\Dilbert 01.pdf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="TestFiles\Dilbert 02.pdf">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="TestFiles\Test.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Lava3.Core\Lava3.Core.csproj">
       <Project>{05b5ddaf-ba66-470d-acd3-2c2e73b62961}</Project>
       <Name>Lava3.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Lava3.TestFiles\Lava3.TestFiles.csproj">
+      <Project>{cb749b98-edad-4958-a6f7-bb587e169fab}</Project>
+      <Name>Lava3.TestFiles</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

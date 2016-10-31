@@ -40,7 +40,7 @@ namespace Lava3.Core
         /// </summary>
         /// <param name="sheet"></param>
         /// <returns></returns>
-        public static void ClearComments( ExcelWorksheet sheet)
+        public static void ClearComments(ExcelWorksheet sheet)
         {
             if (sheet.Comments.Count > 0)
             {
@@ -57,7 +57,7 @@ namespace Lava3.Core
         /// <param name="sheet"></param>
         /// <param name="address"></param>
         /// <param name="commentText"></param>
-        public static void SetComment( ExcelWorksheet sheet, ExcelCellAddress cellAddress, string commentText, Color? fillColour = null)
+        public static void SetComment(ExcelWorksheet sheet, ExcelCellAddress cellAddress, string commentText, Color? fillColour = null)
         {
             var cell = sheet.Cells[cellAddress.Address];
             if (cell.Comment == null &&
@@ -78,10 +78,10 @@ namespace Lava3.Core
         }
 
 
-        internal static void SetComment( ExcelWorksheet sheet, int rownum, int columnNumber, string commentText, System.Drawing.Color? fillColour = null)
+        internal static void SetComment(ExcelWorksheet sheet, int rownum, int columnNumber, string commentText, System.Drawing.Color? fillColour = null)
         {
             ExcelCellAddress cellAddress = new ExcelCellAddress(rownum, columnNumber);
-            SetComment( sheet, cellAddress, commentText, fillColour);
+            SetComment(sheet, cellAddress, commentText, fillColour);
         }
         #endregion
         #region ReplaceNullOrEmpty
@@ -107,7 +107,7 @@ namespace Lava3.Core
         }
         public static decimal? ReplaceNullOrEmptyDecimal(object o)
         {
-            if (o == null)
+            if (o == null || string.IsNullOrWhiteSpace(o.ToString()))
             {
                 return null;
             }
@@ -136,56 +136,102 @@ namespace Lava3.Core
         {
             public static System.Drawing.Color DuplicateColour { get { return System.Drawing.Color.LightGreen; } }
             public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
+            public static System.Drawing.Color DividerColour { get { return System.Drawing.Color.LightBlue; } }
+            public static System.Drawing.Color StartingBalance { get { return System.Drawing.Color.LightGray; } }
         }
 
 
 
         #endregion
 
-        internal static void DeleteRows( ExcelWorksheet sheet, int startingRow = 1)
+        internal static void DeleteRows(ExcelWorksheet sheet, int startingRow = 1)
         {
-            ClearComments( sheet);
+            ClearComments(sheet);
             for (int i = sheet.Dimension.Rows; i > startingRow; i--)
             {
                 sheet.DeleteRow(i);
             }
         }
-        #region update cell
-        private static void WriteErrors(ExcelWorksheet sheet, int rownum,int colnum,List<string> errors)
+        #region WriteErrors
+
+        private static void WriteErrors(ExcelWorksheet sheet, int rownum, ColumnString field, string isBlankErrorMessage = null)
         {
-            if (!errors.Any()) return;
-            StringBuilder sb = new StringBuilder();
-            foreach (string error in errors)
-            {
-                sb.AppendLine(error);
-            }
-            SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
+            WriteErrors(sheet, rownum, field.ColumnNumber, field.Errors, isBlankErrorMessage);
+            ExcelAddress cellAddress = new ExcelAddress(rownum,
+                                                        field.ColumnNumber,
+                                                        rownum,
+                                                        field.ColumnNumber);
+
         }
-        public static void UpdateCellDate( ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
+        private static void WriteErrors(ExcelWorksheet sheet, 
+                                        int rownum, int colnum, 
+                                        List<string> errors, 
+                                        string isBlankErrorMessage = null)
         {
-            if (field?.Value==null) return;
-            sheet.Cells[rownumber, field.ColumnNumber].Value = ((DateTime)field.Value).ToOADate();
+            if (!errors.Any() && string.IsNullOrWhiteSpace(isBlankErrorMessage)) return;
+
+            StringBuilder sb = new StringBuilder();
+
+            if (errors.Any() && !string.IsNullOrWhiteSpace(isBlankErrorMessage))
+            {
+                errors.Add(isBlankErrorMessage);
+            }
+            else if (!string.IsNullOrWhiteSpace(isBlankErrorMessage))
+            {
+                ExcelAddress cellAddress = new ExcelAddress(rownum,
+                                                                colnum,
+                                                                rownum,
+                                                                colnum);
+
+                var cf = sheet.ConditionalFormatting.AddContainsBlanks(cellAddress);
+                cf.Style.Fill.BackgroundColor.Color = Common.Colours.ErrorColour;
+            }
+            if (errors.Any())
+            {
+                foreach (string error in errors)
+                {
+                    sb.AppendLine(error);
+                }
+
+                SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
+            }
+        }
+#endregion
+        #region update cell
+        public static void UpdateCellDate(ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
+        {
+            if (field?.Value == null && !field.Errors.Any()) return;
+            if (field.Value != null)
+            {
+                sheet.Cells[rownumber, field.ColumnNumber].Value = ((DateTime)field.Value).ToOADate();
+            }
             sheet.Cells[rownumber, field.ColumnNumber].Style.Numberformat.Format = DateTimeFormatInfo.CurrentInfo.ShortDatePattern;
 
             WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
         }
-        public static void UpdateCellString( ExcelWorksheet sheet, int rownumber, ColumnString field)
+        public static void UpdateCellString(ExcelWorksheet sheet, int rownumber, ColumnString field, string isBlankErrorMessage = "")
         {
-            if (field==null || (string.IsNullOrEmpty(field.Value) &&
-                                !field.Errors.Any())) return;
+            if (field == null || (string.IsNullOrEmpty(field.Value) &&
+                                !field.Errors.Any() &&
+                                string.IsNullOrWhiteSpace(isBlankErrorMessage)))
+                return;
+
             sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.TrimEnd('\r', '\n');
-            WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);           
+            WriteErrors(sheet, rownumber, field, isBlankErrorMessage);            
         }
-        public static void UpdateCellDecimal( ExcelWorksheet sheet, int rownumber, ColumnDecimal field)
+        public static void UpdateCellDecimal(ExcelWorksheet sheet, int rownumber, ColumnDecimal field)
         {
-            if (field?.Value==null) return;
-            sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value;
+            if (field?.Value == null) return;
+            var cell = sheet.Cells[rownumber, field.ColumnNumber];
+            cell.Value = field.Value;
+            cell.Style.Numberformat.Format = "_-* #,##0.00_-;-* #,##0.00_-;_-* \" - \"??_-;_-@_-";
+
             WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
         }
 
-        internal static void UpdateHyperLink(ExcelWorksheet sheet, 
-                                            int rownum, 
-                                            ColumnString cell, 
+        internal static void UpdateHyperLink(ExcelWorksheet sheet,
+                                            int rownum,
+                                            ColumnString cell,
                                             Uri hyperLink,
                                             string stylenameHyperlink)
         {
@@ -200,6 +246,14 @@ namespace Lava3.Core
                 cellRange.StyleName = stylenameHyperlink;
                 cellRange.Value = cell.Value;
             }
+        }
+
+        internal static void SetRowColour(ExcelWorksheet sheet, int rownum, int lastColumnNumber, Color dividerColour, bool isBold)
+        {
+            ExcelRange cell = sheet.Cells[rownum, 1, rownum, lastColumnNumber];
+            cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+            cell.Style.Fill.BackgroundColor.SetColor((Color)dividerColour);
+            cell.Style.Font.Bold = isBold;
         }
 
 

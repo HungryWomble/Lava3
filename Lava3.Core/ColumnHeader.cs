@@ -5,5 +5,9 @@ namespace Lava3.Core
     {
         public string Header { get; set; }
         public int ColumnNumber { get; set; }
+        public override string ToString()
+        {
+            return $"[{ColumnNumber}] {Header}";
+        }
     }
 }

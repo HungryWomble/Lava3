@@ -118,7 +118,7 @@ namespace Lava3.Core
         {
             _SheetCarMileage = Package.Workbook.Worksheets[eWorkSheetLabels.CarMilage];
             var columnHeaders = Common.GetColumnHeaders(_SheetCarMileage, 3);
-            MileageSummary = new CarMillageSummary(_SheetCarMileage,columnHeaders);
+            MileageSummary = new CarMillageSummary(_SheetCarMileage, columnHeaders);
         }
         public void LoadCurrentAccount()
         {
@@ -247,21 +247,23 @@ namespace Lava3.Core
         public void LoadAnnualSummary()
         {
             LoadCarSummary();
+            LoadCurrentAccount();
             _SheetAnnualSummary = Package.Workbook.Worksheets[eWorkSheetLabels.AnnualSummary];
-            
+            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
+            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+
 
             #region Get the expences
-            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses,2);
 
             int ExpenseStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Expenses, 1) + 3;
             int ExpenseTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseStartRownumber);
             List<SummaryExpense> localExpense = new List<SummaryExpense>();
-            if(ExpenseTotalRowNumer- ExpenseStartRownumber!=0)
+            if (ExpenseTotalRowNumer - ExpenseStartRownumber != 0)
             {
-                for(int rownum = ExpenseStartRownumber;rownum<ExpenseTotalRowNumer;rownum++)
+                for (int rownum = ExpenseStartRownumber; rownum < ExpenseTotalRowNumer; rownum++)
                 {
                     SummaryExpense expense = new SummaryExpense(_SheetAnnualSummary, chExpences, rownum);
-                    if (!string.IsNullOrEmpty(expense.Description.Value ))
+                    if (!string.IsNullOrEmpty(expense.Description.Value))
                     {
                         localExpense.Add(expense);
                     }
@@ -271,15 +273,14 @@ namespace Lava3.Core
             #endregion
 
             #region get the invoices
-            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary,1, eDescriptionKeys.AnnualSummary.Invoices);
             int InvoiceStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Invoices, 1) + 2;
-            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseTotalRowNumer+1);
+            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseTotalRowNumer + 1);
             List<SummaryInvoice> localInvoices = new List<SummaryInvoice>();
-            if(InvoiceTotalRowNumer-InvoiceStartRownumber!=0)
+            if (InvoiceTotalRowNumer - InvoiceStartRownumber != 0)
             {
                 for (int rownum = InvoiceStartRownumber; rownum < InvoiceTotalRowNumer; rownum++)
                 {
-                    localInvoices.Add(new SummaryInvoice(_SheetAnnualSummary,chInvoices, rownum));
+                    localInvoices.Add(new SummaryInvoice(_SheetAnnualSummary, chInvoices, rownum));
                 }
             }
             Invoices = localInvoices;
@@ -518,6 +519,58 @@ namespace Lava3.Core
 
         private void UpsertSummary()
         {
+            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
+            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+
+            int rownum = 4;
+            Common.DeleteRows(_SheetAnnualSummary, rownum);
+            //TODO: add summary
+
+            #region Add expenses
+            rownum += 3;
+            //Add header
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Expenses });
+            //////
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString() { ColumnNumber = Expenses.First().VAT.ColumnNumber,
+                                                         Value = "If applicable" });
+            //////
+            rownum++;
+            int firstExpenseRow = rownum;
+            for (int i = 1; i <= chExpences.Count; i++)
+            {
+                Common.SetHeader(_SheetAnnualSummary, rownum, chExpences, i);
+            }
+
+            foreach (SummaryExpense expense in Expenses)
+            {
+                rownum++;
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, expense.Date);
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, expense.Description);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.Value);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.VAT);
+                var SumAddress = new ExcelAddress(rownum, 3, rownum, 3);
+                var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
+                _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
+            }
+            rownum+=2;
+
+            //Expenses Total row
+            var firstExpense = Expenses.First();
+            _SheetAnnualSummary.Cells[rownum, firstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
+            for (int i = 3; i <= chExpences.Count(); i++)
+            {
+                Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
+            }
+            ExcelAddress TotalOwedAddress = new ExcelAddress(rownum, 4, rownum , 4);
+            ExcelAddress TotalExpenseAddress = new ExcelAddress(rownum, 3, rownum, 3);
+            string totalOwedFormula =  $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
+            _SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula = totalOwedFormula;
+            rownum += 2;
+            #endregion
+
 
         }
     }

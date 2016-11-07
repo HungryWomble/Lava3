@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Lava3.Core.DataTypes;
 using OfficeOpenXml;
 using System.Globalization;
+using OfficeOpenXml.Style;
 
 namespace Lava3.Core
 {
@@ -284,6 +285,22 @@ namespace Lava3.Core
             cell.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
             cell.Style.Fill.BackgroundColor.SetColor((Color)dividerColour);
             cell.Style.Font.Bold = isBold;
+        }
+
+        internal static void SetHeader(ExcelWorksheet _SheetAnnualSummary, int rownum, Dictionary<string, ColumnHeader> columnHeaders, int columNumber, bool wrapText = true)
+        {
+            ColumnHeader ch = columnHeaders.Single(w=>w.Value.ColumnNumber == columNumber).Value;
+            ExcelRange cell = _SheetAnnualSummary.Cells[rownum, ch.ColumnNumber];
+            cell.Value = ch.Header;
+            cell.Style.WrapText = wrapText;
+            cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+            cell.Style.Font.Bold = true;
+        }
+
+        internal static void SetTotal(ExcelWorksheet _SheetAnnualSummary, int rownum, int firstExpenseRow, int columnNumber)
+        {
+            ExcelAddress SumAddress = new ExcelAddress(firstExpenseRow,columnNumber, rownum-1,columnNumber);
+            _SheetAnnualSummary.Cells[rownum,columnNumber].Formula = $"SUM({SumAddress.Address})";
         }
 
 

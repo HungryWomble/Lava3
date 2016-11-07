@@ -16,17 +16,33 @@ namespace Lava3.Core
 {
     public class ExcelFile : IDisposable
     {
+        public ExcelFile()
+        {
 
+        }
+        public ExcelFile(string filename)
+        {
+            OpenPackage(filename);
+        }
         public static class eWorkSheetLabels
         {
             public const string CreditCard = "CreditCard";
             public const string CategoryLookup = "Category LookUp";
             public const string CurrentAccount = "HSBC";
-            public const string Summary = "Annual Summary";
+            public const string AnnualSummary = "Annual Summary";
+            public const string CarMilage = "Car Mileage";
         }
-        public static class eDescriptionKeys
+        public struct eDescriptionKeys
         {
             public const string StartingBalance = "Balance At start of year";
+            public const string Totals = "Totals";
+            public struct AnnualSummary
+            {
+                public const string Invoices = "SALES INVOICES";
+                public const string Expenses = "PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH";
+                public const string Summary = "BANK ACCOUNT PAYMENTS";
+            }
+
         }
 
         #region Kill
@@ -74,11 +90,15 @@ namespace Lava3.Core
         internal ExcelWorksheet _SheetCategories;
         internal ExcelWorksheet _SheetCreditCard;
         internal ExcelWorksheet _SheetCurrentAccount;
+        internal ExcelWorksheet _SheetCarMileage;
+        internal ExcelWorksheet _SheetAnnualSummary;
         public IEnumerable<Category> CategoryRows { get; set; }
         public IEnumerable<CreditCard> CreditCardRows { get; set; }
         public IEnumerable<CurrentAccount> CurrentAccountRows { get; set; }
-        public Dictionary<string, dynamic> CategoryColumns { get; set; }
-
+        public IEnumerable<SummaryInvoice> Invoices { get; set; }
+        public IEnumerable<SummaryExpense> Expenses { get; set; }
+        public Dictionary<string, ColumnHeader> CategoryColumns { get; set; }
+        public CarMillageSummary MileageSummary { get; set; }
         /// <summary>
         /// Open the excel Package
         /// </summary>
@@ -93,9 +113,16 @@ namespace Lava3.Core
             }
         }
 
-        public void ProcessCurrentAccount()
+
+        public void LoadCarSummary()
         {
-            ProcessCreditCard();
+            _SheetCarMileage = Package.Workbook.Worksheets[eWorkSheetLabels.CarMilage];
+            var columnHeaders = Common.GetColumnHeaders(_SheetCarMileage, 3);
+            MileageSummary = new CarMillageSummary(_SheetCarMileage,columnHeaders);
+        }
+        public void LoadCurrentAccount()
+        {
+            LoadCreditCard();
             _SheetCurrentAccount = Package.Workbook.Worksheets[eWorkSheetLabels.CurrentAccount];
             var columnHeaders = Common.GetColumnHeaders(_SheetCurrentAccount, 2);
             int rownum = 3;
@@ -197,9 +224,9 @@ namespace Lava3.Core
         /// <summary>
         /// Load the credit card into memory
         /// </summary>
-        public void ProcessCreditCard()
+        public void LoadCreditCard()
         {
-            ProcessCategory();
+            LoadCategory();
 
             _SheetCreditCard = Package.Workbook.Worksheets[eWorkSheetLabels.CreditCard];
 
@@ -217,14 +244,55 @@ namespace Lava3.Core
             CreditCardRows = rows;
         }
 
+        public void LoadAnnualSummary()
+        {
+            LoadCarSummary();
+            _SheetAnnualSummary = Package.Workbook.Worksheets[eWorkSheetLabels.AnnualSummary];
+            
+
+            #region Get the expences
+            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses,2);
+
+            int ExpenseStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Expenses, 1) + 3;
+            int ExpenseTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseStartRownumber);
+            List<SummaryExpense> localExpense = new List<SummaryExpense>();
+            if(ExpenseTotalRowNumer- ExpenseStartRownumber!=0)
+            {
+                for(int rownum = ExpenseStartRownumber;rownum<ExpenseTotalRowNumer;rownum++)
+                {
+                    SummaryExpense expense = new SummaryExpense(_SheetAnnualSummary, chExpences, rownum);
+                    if (!string.IsNullOrEmpty(expense.Description.Value ))
+                    {
+                        localExpense.Add(expense);
+                    }
+                }
+            }
+            Expenses = localExpense;
+            #endregion
+
+            #region get the invoices
+            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary,1, eDescriptionKeys.AnnualSummary.Invoices);
+            int InvoiceStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Invoices, 1) + 2;
+            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseTotalRowNumer+1);
+            List<SummaryInvoice> localInvoices = new List<SummaryInvoice>();
+            if(InvoiceTotalRowNumer-InvoiceStartRownumber!=0)
+            {
+                for (int rownum = InvoiceStartRownumber; rownum < InvoiceTotalRowNumer; rownum++)
+                {
+                    localInvoices.Add(new SummaryInvoice(_SheetAnnualSummary,chInvoices, rownum));
+                }
+            }
+            Invoices = localInvoices;
+            #endregion
+        }
         public void Save()
         {
             UpsertCatergory();
             UpsertCreditCard();
             UpsertCurrentAccount();
+            UpsertSummary();
             Package.Save();
         }
-
 
         public void SaveAndClose()
         {
@@ -245,7 +313,7 @@ namespace Lava3.Core
         /// <summary>
         /// Load the category into Memory
         /// </summary>
-        public void ProcessCategory()
+        public void LoadCategory()
         {
             CategoryColumns = Common.GetColumnHeaders(_SheetCategories, 1);
 
@@ -264,8 +332,7 @@ namespace Lava3.Core
                     };
                     if (_SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink != null)
                     {
-
-                        row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink.OriginalUri;
+                        row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink;
                     }
 
                     accountingCategories.Add(row);
@@ -447,6 +514,11 @@ namespace Lava3.Core
                 _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
 
             }
+        }
+
+        private void UpsertSummary()
+        {
+
         }
     }
 }

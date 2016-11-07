@@ -22,7 +22,7 @@ namespace Lava3.Test
             var target = new ExcelFile();
 
             target.OpenPackage(path);
-            target.ProcessCreditCard();
+            target.LoadCreditCard();
             List<CreditCard> actual = target.CreditCardRows.ToList();
             foreach (var item in actual)
             {

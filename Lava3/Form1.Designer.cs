@@ -36,6 +36,7 @@
             this.btnSortCategories = new System.Windows.Forms.Button();
             this.btnCreditCard = new System.Windows.Forms.Button();
             this.btnCurrentAccount = new System.Windows.Forms.Button();
+            this.btnSummary = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnBrowse
@@ -111,11 +112,22 @@
             this.btnCurrentAccount.UseVisualStyleBackColor = true;
             this.btnCurrentAccount.Click += new System.EventHandler(this.btnCurrentAccount_Click);
             // 
+            // btnSummary
+            // 
+            this.btnSummary.Location = new System.Drawing.Point(48, 205);
+            this.btnSummary.Name = "btnSummary";
+            this.btnSummary.Size = new System.Drawing.Size(119, 23);
+            this.btnSummary.TabIndex = 10;
+            this.btnSummary.Text = "Summary";
+            this.btnSummary.UseVisualStyleBackColor = true;
+            this.btnSummary.Click += new System.EventHandler(this.btnSummary_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(754, 261);
+            this.Controls.Add(this.btnSummary);
             this.Controls.Add(this.btnCurrentAccount);
             this.Controls.Add(this.btnCreditCard);
             this.Controls.Add(this.btnSortCategories);
@@ -140,6 +152,7 @@
         private System.Windows.Forms.Button btnSortCategories;
         private System.Windows.Forms.Button btnCreditCard;
         private System.Windows.Forms.Button btnCurrentAccount;
+        private System.Windows.Forms.Button btnSummary;
     }
 }
 

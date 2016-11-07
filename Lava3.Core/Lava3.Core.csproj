@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Lava3.Core</RootNamespace>
     <AssemblyName>Lava3.Core</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -45,11 +46,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ColumnHeader.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="DataTypes\ColumnDateTime.cs" />
     <Compile Include="DataTypes\ColumnDecimal.cs" />
+    <Compile Include="DataTypes\ColumnInt.cs" />
     <Compile Include="DataTypes\ColumnString.cs" />
     <Compile Include="ExcelFile.cs" />
+    <Compile Include="Model\CarMillageSummary.data.cs">
+      <DependentUpon>CarMillageSummary.logic.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Model\CarMillageSummary.logic.cs" />
     <Compile Include="Model\Category.data.cs">
       <DependentUpon>Category.logic..cs</DependentUpon>
     </Compile>
@@ -62,6 +69,12 @@
       <DependentUpon>CurrentAccount.logic.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\CurrentAccount.logic.cs" />
+    <Compile Include="Model\SummaryExpense.data.cs" />
+    <Compile Include="Model\SummaryExpense.logic.cs" />
+    <Compile Include="Model\SummaryInvoice.data.cs">
+      <DependentUpon>SummaryInvoice.logic.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Model\SummaryInvoice.logic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

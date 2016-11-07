@@ -27,7 +27,7 @@ namespace Lava3.Test
             target.KillAllExcel();
 
             target.OpenPackage(path);
-            target.ProcessCurrentAccount();
+            target.LoadCurrentAccount();
             List<CreditCard> actualCreditCardRows = target.CreditCardRows.ToList();
             List<CurrentAccount> actualCurrentAccountRows = target.CurrentAccountRows.ToList();
             target.SaveAndClose();

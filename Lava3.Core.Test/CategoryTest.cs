@@ -52,7 +52,7 @@ namespace Lava3.Test
             var target = new ExcelFile();
 
             target.OpenPackage(path);
-            target.ProcessCategory();
+            target.LoadCategory();
             List<Category> actual = target.CategoryRows.ToList();
             target.SaveAndClose();
             Assert.IsNull(target.Package);

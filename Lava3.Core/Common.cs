@@ -12,17 +12,18 @@ namespace Lava3.Core
 {
     public static class Common
     {
-        public static Dictionary<string, dynamic> GetColumnHeaders(ExcelWorksheet sheet, int headerRowNumber)
+        #region GetColumnHeaders
+        public static Dictionary<string, ColumnHeader> GetColumnHeaders(ExcelWorksheet sheet, int headerRowNumber)
         {
             if (sheet == null) throw new ArgumentNullException("sheet passed in is null");
-            Dictionary<string, dynamic> retval = new Dictionary<string, dynamic>();
+            Dictionary<string, ColumnHeader> retval = new Dictionary<string, ColumnHeader>();
             int colnum = 1;
             while (colnum <= sheet.Dimension.Columns)
             {
                 string key = Common.ReplaceNullOrEmpty(sheet.Cells[headerRowNumber, colnum].Value);
                 if (!string.IsNullOrEmpty(key))
                 {
-                    retval.Add(key, new
+                    retval.Add(key, new ColumnHeader()
                     {
                         Header = key,
                         ColumnNumber = colnum
@@ -31,9 +32,30 @@ namespace Lava3.Core
                 colnum++;
             }
             return retval;
-
+        }
+        public static Dictionary<string, ColumnHeader> GetColumnHeaders(ExcelWorksheet sheet, int colnum, string seperatorKey, int offset = 1)
+        {
+            int rownum = GetRownumberForKey(sheet, seperatorKey, colnum);
+            if (rownum > 0)
+            {
+                return GetColumnHeaders(sheet, rownum + offset);
+            }
+            throw new Exception($"Key value [{seperatorKey}] not found on sheet '{sheet.Name}'.");
         }
 
+        #endregion
+        public static int GetRownumberForKey(ExcelWorksheet sheet, string seperatorkey, int colnum, int startRowNumber=1)
+        {
+            for (int rownum = startRowNumber; rownum < sheet.Dimension.Rows; rownum++)
+            {
+                string key = Common.ReplaceNullOrEmpty(sheet.Cells[rownum, colnum].Value);
+                if (key.Equals(seperatorkey, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    return rownum;
+                }
+            }
+            return 0;
+        }
         #region Comments
         /// <summary>
         /// Clear the workwheets
@@ -113,6 +135,14 @@ namespace Lava3.Core
             }
             return Convert.ToDecimal(o);
         }
+        public static int? ReplaceNullOrEmptyInt(object o)
+        {
+            if (o == null || string.IsNullOrWhiteSpace(o.ToString()))
+            {
+                return null;
+            }
+            return Convert.ToInt32(o);
+        }
         #endregion
         #region ReplaceIfEmpty
         public static string ReplaceIfEmpty(string original, string replacement)
@@ -163,9 +193,9 @@ namespace Lava3.Core
                                                         field.ColumnNumber);
 
         }
-        private static void WriteErrors(ExcelWorksheet sheet, 
-                                        int rownum, int colnum, 
-                                        List<string> errors, 
+        private static void WriteErrors(ExcelWorksheet sheet,
+                                        int rownum, int colnum,
+                                        List<string> errors,
                                         string isBlankErrorMessage = null)
         {
             if (!errors.Any() && string.IsNullOrWhiteSpace(isBlankErrorMessage)) return;
@@ -196,11 +226,11 @@ namespace Lava3.Core
                 SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
             }
         }
-#endregion
+        #endregion
         #region update cell
         public static void UpdateCellDate(ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
         {
-            if (field?.Value == null && !field.Errors.Any()) return;
+            if (field == null || field?.Value == null && !field.Errors.Any()) return;
             if (field.Value != null)
             {
                 sheet.Cells[rownumber, field.ColumnNumber].Value = ((DateTime)field.Value).ToOADate();
@@ -217,7 +247,7 @@ namespace Lava3.Core
                 return;
 
             sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.TrimEnd('\r', '\n');
-            WriteErrors(sheet, rownumber, field, isBlankErrorMessage);            
+            WriteErrors(sheet, rownumber, field, isBlankErrorMessage);
         }
         public static void UpdateCellDecimal(ExcelWorksheet sheet, int rownumber, ColumnDecimal field)
         {

@@ -11,6 +11,7 @@ using System.Xml.Linq;
 using Lava3.Core.DataTypes;
 using System.Drawing;
 using OfficeOpenXml.Style.XmlAccess;
+using System.Reflection;
 
 namespace Lava3.Core
 {
@@ -274,7 +275,7 @@ namespace Lava3.Core
 
             #region get the invoices
             int InvoiceStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Invoices, 1) + 2;
-            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseTotalRowNumer + 1);
+            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, InvoiceStartRownumber + 1);
             List<SummaryInvoice> localInvoices = new List<SummaryInvoice>();
             if (InvoiceTotalRowNumer - InvoiceStartRownumber != 0)
             {
@@ -534,8 +535,11 @@ namespace Lava3.Core
             //////
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                                    new ColumnString() { ColumnNumber = Expenses.First().VAT.ColumnNumber,
-                                                         Value = "If applicable" });
+                                    new ColumnString()
+                                    {
+                                        ColumnNumber = Expenses.First().VAT.ColumnNumber,
+                                        Value = "If applicable"
+                                    });
             //////
             rownum++;
             int firstExpenseRow = rownum;
@@ -555,7 +559,7 @@ namespace Lava3.Core
                 var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
                 _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
             }
-            rownum+=2;
+            rownum += 2;
 
             //Expenses Total row
             var firstExpense = Expenses.First();
@@ -564,13 +568,54 @@ namespace Lava3.Core
             {
                 Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
             }
-            ExcelAddress TotalOwedAddress = new ExcelAddress(rownum, 4, rownum , 4);
+            ExcelAddress TotalOwedAddress = new ExcelAddress(rownum, 4, rownum, 4);
             ExcelAddress TotalExpenseAddress = new ExcelAddress(rownum, 3, rownum, 3);
-            string totalOwedFormula =  $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
+            string totalOwedFormula = $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
             _SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula = totalOwedFormula;
             rownum += 2;
             #endregion
 
+            #region Add Invoices
+
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Invoices });
+            rownum++;
+            SummaryInvoice FirstInvoice = Invoices.First();
+            //Set the expense header
+            foreach (PropertyInfo prop in FirstInvoice.GetType().GetProperties())
+            {
+                if (prop.PropertyType.GetInterface("IColumDataType") == null)
+                    continue;
+
+                IColumDataType cdt = (IColumDataType)prop.GetValue(FirstInvoice, null);
+
+                Common.SetHeader(_SheetAnnualSummary, rownum, chInvoices, cdt.ColumnNumber);
+            }
+
+            //set the expense data
+            int FirstInvoiceRow = rownum + 1;
+            foreach (SummaryInvoice invoice in Invoices)
+            {
+                rownum++;
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
+                //TODO: Invoice
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoiceDate);
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.HoursInvoiced);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysInvoiced);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.InvoiceAmount);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.TotalPaid);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.DayRate);
+            }
+            rownum += 2;
+            //Invoice Total Row
+            _SheetAnnualSummary.Cells[rownum, FirstInvoice.Customer.ColumnNumber].Value = eDescriptionKeys.Totals;
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.HoursInvoiced.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.DaysInvoiced.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.InvoiceAmount.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.TotalPaid.ColumnNumber);
+            #endregion
 
         }
     }

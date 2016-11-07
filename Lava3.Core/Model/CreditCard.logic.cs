@@ -11,7 +11,7 @@ namespace Lava3.Core.Model
 {
     public partial class CreditCard
     {
-        public CreditCard(ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categoryRows)
+        public CreditCard(ExcelWorksheet sheet, Dictionary<string, ColumnHeader> ch, int rownum, IEnumerable<Category> categoryRows)
         {
             RowNumber = rownum;
             PaidDate = new ColumnDateTime(sheet, rownum, ch["Paid Date"]);
@@ -26,7 +26,7 @@ namespace Lava3.Core.Model
             Notes = new ColumnString(sheet, rownum, ch["Notes"]);
             if (sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink != null)
             {
-                NotesHyperLink = sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink.OriginalUri;
+                NotesHyperLink = sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink;
             }
             if (categoryRows.Any())
             {

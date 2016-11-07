@@ -7,7 +7,7 @@ using OfficeOpenXml;
 
 namespace Lava3.Core.DataTypes
 {
-    public class ColumnDateTime
+    public class ColumnDateTime: IColumDataType
     {
         public ColumnDateTime()
         {
@@ -33,4 +33,5 @@ namespace Lava3.Core.DataTypes
         }
         public List<string> Errors { get; set; }
     }
+  
 }

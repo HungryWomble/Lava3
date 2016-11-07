@@ -52,6 +52,7 @@
     <Compile Include="DataTypes\ColumnDecimal.cs" />
     <Compile Include="DataTypes\ColumnInt.cs" />
     <Compile Include="DataTypes\ColumnString.cs" />
+    <Compile Include="DataTypes\IColumnDataType.cs" />
     <Compile Include="ExcelFile.cs" />
     <Compile Include="Model\CarMillageSummary.data.cs">
       <DependentUpon>CarMillageSummary.logic.cs</DependentUpon>

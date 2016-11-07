@@ -229,6 +229,16 @@ namespace Lava3.Core
         }
         #endregion
         #region update cell
+        public static void UpdateCellInt(ExcelWorksheet sheet, int rownumber, ColumnInt field)
+        {
+            if (field == null || field?.Value == null && !field.Errors.Any()) return;
+            if (field.Value != null)
+            {
+                sheet.Cells[rownumber, field.ColumnNumber].Value = (int)field.Value;
+            }
+
+            WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
+        }
         public static void UpdateCellDate(ExcelWorksheet sheet, int rownumber, ColumnDateTime field)
         {
             if (field == null || field?.Value == null && !field.Errors.Any()) return;

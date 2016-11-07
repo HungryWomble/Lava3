@@ -38,7 +38,7 @@ namespace Lava3.Core.Model
         public CurrentAccount()
         {
         }
-        public CurrentAccount(ExcelWorksheet sheet, Dictionary<string, dynamic> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
+        public CurrentAccount(ExcelWorksheet sheet, Dictionary<string, ColumnHeader> ch, int rownum, IEnumerable<Category> categories, IEnumerable<CreditCard> ccRows)
         {
             RowNumber = rownum;
             Date = new ColumnDateTime(sheet, rownum, ch["Date"]);
@@ -56,7 +56,7 @@ namespace Lava3.Core.Model
             Notes = new ColumnString(sheet, rownum, ch["Notes"]);
             if (sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink != null)
             {
-                NotesHyperLink = sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink.OriginalUri;
+                NotesHyperLink = sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink;
             }
             if (Date == null)
             {

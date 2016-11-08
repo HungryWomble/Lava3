@@ -3,7 +3,7 @@ using OfficeOpenXml;
 
 namespace Lava3.Core.DataTypes
 {
-    public class ColumnInt
+    public class ColumnInt : IColumDataType
     {
         public ColumnInt()
         {

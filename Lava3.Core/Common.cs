@@ -8,6 +8,8 @@ using Lava3.Core.DataTypes;
 using OfficeOpenXml;
 using System.Globalization;
 using OfficeOpenXml.Style;
+using Lava3.Core.Model;
+using System.Reflection;
 
 namespace Lava3.Core
 {
@@ -45,7 +47,7 @@ namespace Lava3.Core
         }
 
         #endregion
-        public static int GetRownumberForKey(ExcelWorksheet sheet, string seperatorkey, int colnum, int startRowNumber=1)
+        public static int GetRownumberForKey(ExcelWorksheet sheet, string seperatorkey, int colnum, int startRowNumber = 1)
         {
             for (int rownum = startRowNumber; rownum < sheet.Dimension.Rows; rownum++)
             {
@@ -168,6 +170,8 @@ namespace Lava3.Core
             public static System.Drawing.Color DuplicateColour { get { return System.Drawing.Color.LightGreen; } }
             public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
             public static System.Drawing.Color DividerColour { get { return System.Drawing.Color.LightBlue; } }
+            public static System.Drawing.Color TotalsColour { get { return System.Drawing.Color.LightBlue; } }
+            public static System.Drawing.Color HeaderColour { get { return System.Drawing.Color.LightGray; } }
             public static System.Drawing.Color StartingBalance { get { return System.Drawing.Color.LightGray; } }
         }
 
@@ -178,7 +182,7 @@ namespace Lava3.Core
         internal static void DeleteRows(ExcelWorksheet sheet, int startingRow = 1)
         {
             ClearComments(sheet);
-            for (int i = sheet.Dimension.Rows; i > startingRow; i--)
+            for (int i = sheet.Dimension.Rows; i >= startingRow; i--)
             {
                 sheet.DeleteRow(i);
             }
@@ -250,14 +254,17 @@ namespace Lava3.Core
 
             WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
         }
-        public static void UpdateCellString(ExcelWorksheet sheet, int rownumber, ColumnString field, string isBlankErrorMessage = "")
+        public static void UpdateCellString(ExcelWorksheet sheet, int rownumber, ColumnString field, string isBlankErrorMessage = "", bool IsBold = false)
         {
             if (field == null || (string.IsNullOrEmpty(field.Value) &&
                                 !field.Errors.Any() &&
                                 string.IsNullOrWhiteSpace(isBlankErrorMessage)))
                 return;
+            var cell = sheet.Cells[rownumber, field.ColumnNumber];
+            cell.Value = field.Value.TrimEnd('\r', '\n');
+            cell.Style.Font.Bold = IsBold;
 
-            sheet.Cells[rownumber, field.ColumnNumber].Value = field.Value.TrimEnd('\r', '\n');
+
             WriteErrors(sheet, rownumber, field, isBlankErrorMessage);
         }
         public static void UpdateCellDecimal(ExcelWorksheet sheet, int rownumber, ColumnDecimal field)
@@ -297,10 +304,60 @@ namespace Lava3.Core
             cell.Style.Font.Bold = isBold;
         }
 
-        internal static void SetHeader(ExcelWorksheet _SheetAnnualSummary, int rownum, Dictionary<string, ColumnHeader> columnHeaders, int columNumber, bool wrapText = true)
+        public static int GetLastColumnNumber(object o)
         {
-            ColumnHeader ch = columnHeaders.Single(w=>w.Value.ColumnNumber == columNumber).Value;
-            ExcelRange cell = _SheetAnnualSummary.Cells[rownum, ch.ColumnNumber];
+            int retval = 1;
+            foreach (PropertyInfo prop in o.GetType().GetProperties())
+            {
+                if (prop.PropertyType.GetInterface("IColumDataType") == null)
+                    continue;
+
+                IColumDataType cdt = (IColumDataType)prop.GetValue(o, null);
+
+                if (cdt.ColumnNumber > retval)
+                {
+                    retval = cdt.ColumnNumber;
+                }
+            }
+            return retval;
+        }
+        internal static void SetHeaders(ExcelWorksheet sheet, int rownum, Dictionary<string, ColumnHeader> headers, object o)
+        {
+            int maxCol = 1;
+            foreach (PropertyInfo prop in o.GetType().GetProperties())
+            {
+                if (prop.PropertyType.GetInterface("IColumDataType") == null)
+                    continue;
+
+                IColumDataType cdt = (IColumDataType)prop.GetValue(o, null);
+
+                SetHeader(sheet, rownum, headers, cdt.ColumnNumber);
+                if (cdt.ColumnNumber > maxCol)
+                {
+                    maxCol = cdt.ColumnNumber;
+                }
+            }
+            SetRowColour(sheet, rownum, maxCol, Colours.HeaderColour, true);
+        }
+        internal static void SetHeaders(ExcelWorksheet sheet, int rownum, Dictionary<string, ColumnHeader> headers, bool wrapText = true)
+        {
+            int maxCol = 1;
+            foreach (var item in headers)
+            {
+                ColumnHeader ch = item.Value;
+                SetHeader(sheet, rownum, headers, ch.ColumnNumber);
+                if (ch.ColumnNumber > maxCol)
+                {
+                    maxCol = ch.ColumnNumber;
+                }
+            }
+            SetRowColour(sheet, rownum, maxCol, Colours.HeaderColour, true);
+        }
+
+        internal static void SetHeader(ExcelWorksheet sheet, int rownum, Dictionary<string, ColumnHeader> columnHeaders, int columNumber, bool wrapText = true)
+        {
+            ColumnHeader ch = columnHeaders.Single(w => w.Value.ColumnNumber == columNumber).Value;
+            ExcelRange cell = sheet.Cells[rownum, ch.ColumnNumber];
             cell.Value = ch.Header;
             cell.Style.WrapText = wrapText;
             cell.Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
@@ -309,9 +366,10 @@ namespace Lava3.Core
 
         internal static void SetTotal(ExcelWorksheet _SheetAnnualSummary, int rownum, int firstExpenseRow, int columnNumber)
         {
-            ExcelAddress SumAddress = new ExcelAddress(firstExpenseRow,columnNumber, rownum-1,columnNumber);
-            _SheetAnnualSummary.Cells[rownum,columnNumber].Formula = $"SUM({SumAddress.Address})";
+            ExcelAddress SumAddress = new ExcelAddress(firstExpenseRow, columnNumber, rownum - 1, columnNumber);
+            _SheetAnnualSummary.Cells[rownum, columnNumber].Formula = $"SUM({SumAddress.Address})";
         }
+        
 
 
         #endregion

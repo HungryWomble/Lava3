@@ -3,7 +3,7 @@ using OfficeOpenXml;
 
 namespace Lava3.Core.DataTypes
 {
-    public class ColumnDecimal 
+    public class ColumnDecimal : IColumDataType
     {
         public ColumnDecimal()
         {

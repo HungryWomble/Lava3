@@ -4,7 +4,7 @@ using OfficeOpenXml;
 
 namespace Lava3.Core.DataTypes
 {
-    public class ColumnString
+    public class ColumnString : IColumDataType
     {
         public ColumnString()
         {

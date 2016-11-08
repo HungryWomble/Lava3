@@ -244,7 +244,6 @@ namespace Lava3.Core
 
             CreditCardRows = rows;
         }
-
         public void LoadAnnualSummary()
         {
             LoadCarSummary();
@@ -320,8 +319,8 @@ namespace Lava3.Core
             CategoryColumns = Common.GetColumnHeaders(_SheetCategories, 1);
 
             List<Category> accountingCategories = new List<Category>();
-            int rownum = 2;
-            while (rownum <= _SheetCategories.Dimension.Rows)
+            int rownum = 1;
+            while (rownum < _SheetCategories.Dimension.Rows)
             {
                 ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
                 if (!string.IsNullOrEmpty(description.Value))
@@ -398,12 +397,12 @@ namespace Lava3.Core
         /// </summary>
         private void UpsertCatergory()
         {
-            Common.DeleteRows(_SheetCategories);
 
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCategories, stylenameHyperlink);
 
             int rownum = 1;
+            Common.DeleteRows(_SheetCategories, 2);
             foreach (Category item in CategoryRows)
             {
                 rownum++;
@@ -436,11 +435,11 @@ namespace Lava3.Core
         {
             if (CreditCardRows == null) return;
 
-            Common.DeleteRows(_SheetCreditCard);
             //Create styles
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCreditCard, stylenameHyperlink);
 
+            Common.DeleteRows(_SheetCreditCard,2);
             int rownum = 1;
             foreach (CreditCard item in CreditCardRows)
             {
@@ -472,8 +471,7 @@ namespace Lava3.Core
                 CreditCardRows == null ||
                 CurrentAccountRows == null) return;
 
-            Common.DeleteRows(_SheetCurrentAccount, 2);
-
+            Common.DeleteRows(_SheetCurrentAccount, 3);
             //Create styles
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCurrentAccount, stylenameHyperlink);
@@ -520,18 +518,41 @@ namespace Lava3.Core
 
         private void UpsertSummary()
         {
-            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
-            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+            if (Expenses == null || !Expenses.Any()) return;
+            string stylenameHyperlink = "HyperLink";
+            SummaryExpense FirstExpense = Expenses.First();
+            SummaryInvoice FirstInvoice = Invoices.First();
+            int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
+            int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
+            Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
+            Dictionary<string, ColumnHeader> chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+            Dictionary<string, ColumnHeader> chSummary = new Dictionary<string, ColumnHeader>();
 
             int rownum = 4;
-            Common.DeleteRows(_SheetAnnualSummary, rownum);
+            Common.DeleteRows(_SheetAnnualSummary, 4);
+            #region Add Summary
+            //Build summary Headers
+            int summaryColumnHeaderNumber = 0;
+
+            foreach (string item in "Date,Payee,Reconsiliation,Total Spent, VAT,Dividends,Salary,Expenses".Split(','))
+            {
+                summaryColumnHeaderNumber++;
+                chSummary.Add(item, new ColumnHeader() { Header = item, ColumnNumber = summaryColumnHeaderNumber });
+            }
+            //TODO: add summary headers to sheet
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
+
             //TODO: add summary
+            //TODO: add summary Totals
+            #endregion
 
             #region Add expenses
             rownum += 3;
             //Add header
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Expenses });
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Expenses },
+                                    "",
+                                    true);
             //////
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
@@ -539,14 +560,16 @@ namespace Lava3.Core
                                     {
                                         ColumnNumber = Expenses.First().VAT.ColumnNumber,
                                         Value = "If applicable"
-                                    });
+                                    },
+                                    "",
+                                    false);
+
+
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.HeaderColour, true);
             //////
             rownum++;
             int firstExpenseRow = rownum;
-            for (int i = 1; i <= chExpences.Count; i++)
-            {
-                Common.SetHeader(_SheetAnnualSummary, rownum, chExpences, i);
-            }
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chExpences, FirstExpense);
 
             foreach (SummaryExpense expense in Expenses)
             {
@@ -562,8 +585,7 @@ namespace Lava3.Core
             rownum += 2;
 
             //Expenses Total row
-            var firstExpense = Expenses.First();
-            _SheetAnnualSummary.Cells[rownum, firstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
+            _SheetAnnualSummary.Cells[rownum, FirstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
             for (int i = 3; i <= chExpences.Count(); i++)
             {
                 Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
@@ -572,25 +594,21 @@ namespace Lava3.Core
             ExcelAddress TotalExpenseAddress = new ExcelAddress(rownum, 3, rownum, 3);
             string totalOwedFormula = $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
             _SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula = totalOwedFormula;
+
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.TotalsColour, true);
             rownum += 2;
             #endregion
 
             #region Add Invoices
 
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Invoices });
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Invoices },
+                                    "",
+                                    true);
             rownum++;
-            SummaryInvoice FirstInvoice = Invoices.First();
             //Set the expense header
-            foreach (PropertyInfo prop in FirstInvoice.GetType().GetProperties())
-            {
-                if (prop.PropertyType.GetInterface("IColumDataType") == null)
-                    continue;
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chInvoices, FirstInvoice);
 
-                IColumDataType cdt = (IColumDataType)prop.GetValue(FirstInvoice, null);
-
-                Common.SetHeader(_SheetAnnualSummary, rownum, chInvoices, cdt.ColumnNumber);
-            }
 
             //set the expense data
             int FirstInvoiceRow = rownum + 1;
@@ -598,7 +616,7 @@ namespace Lava3.Core
             {
                 rownum++;
                 Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
-                //TODO: Invoice
+                Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink);
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoiceDate);
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
                 Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);
@@ -615,6 +633,7 @@ namespace Lava3.Core
             Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.DaysInvoiced.ColumnNumber);
             Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.InvoiceAmount.ColumnNumber);
             Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.TotalPaid.ColumnNumber);
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastInvoiceColumnNumber, Common.Colours.TotalsColour, true);
             #endregion
 
         }

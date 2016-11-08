@@ -578,19 +578,24 @@ namespace Lava3.Core
             Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
 
             //add summary
+            int unknownCategoryColumn = chSummary.Single(s => s.Key.Equals(UnknonwnCategory)).Value.ColumnNumber;
             int summaryColumnsCount = chSummary.Count();
             foreach (CurrentAccount currentAccount in CurrentAccountRows.Where(w => !w.IsDivider && !w.IsMonthlySummary && !w.IsStartingBalence))
             {
+                //Only processing the debits here
+                if (currentAccount.Debit.Value == 0)
+                    continue;
                 rownum++;
-                decimal? TransactionAmount = currentAccount.Debit.Value + currentAccount.Credit.Value;
+              
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
                 Common.UpdateCellString(_SheetAnnualSummary, rownum, new ColumnString() { ColumnNumber = 2, Value = currentAccount.Description.Value });
-                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = 3, Value = TransactionAmount });
+                Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, 3, $"D{rownum}-{currentAccount.Debit.Value}");
+
                 Common.AddSumFormula(_SheetAnnualSummary, rownum, 4, rownum, 5, rownum, summaryColumnsCount);
                 if (!currentAccount.IsCreditCard)
                 {
                     int colnum = chSummary.Single(w => w.Key.Equals(currentAccount.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
-                    Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = TransactionAmount });
+                    Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = currentAccount.Debit.Value });
                 }
                 else
                 {
@@ -605,7 +610,10 @@ namespace Lava3.Core
                         Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = creditCard.TransactionAmount.Value });
                     }
                 }
+
+
             }
+           
             //add summary Totals
             rownum++;
             for (int i = 3; i <= chSummary.Count(); i++)

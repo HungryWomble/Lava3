@@ -110,7 +110,7 @@ namespace Lava3.Core.Model
             }
             else
             {
-                localCategory = c.Single();
+                localCategory = c.First();
             }
 
             if (localCategory != null &&

@@ -385,5 +385,12 @@ namespace Lava3.Core
             }
         }
         #endregion
+        internal static void AddFormulaDecimal(ExcelWorksheet sheet, int row, int col, string formula)
+        {
+            var cell = sheet.Cells[row, col];
+            cell.Formula = formula;
+            cell.Style.Numberformat.Format = "_-* #,##0.00_-;-* #,##0.00_-;_-* \" - \"??_-;_-@_-";
+
+        }
     }
 }

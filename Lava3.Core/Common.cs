@@ -364,14 +364,26 @@ namespace Lava3.Core
             cell.Style.Font.Bold = true;
         }
 
-        internal static void SetTotal(ExcelWorksheet _SheetAnnualSummary, int rownum, int firstExpenseRow, int columnNumber)
+        internal static void SetTotal(ExcelWorksheet sheet, int lastRowNumber, int firstRowNumber, int firstColumnNumber)
         {
-            ExcelAddress SumAddress = new ExcelAddress(firstExpenseRow, columnNumber, rownum - 1, columnNumber);
-            _SheetAnnualSummary.Cells[rownum, columnNumber].Formula = $"SUM({SumAddress.Address})";
+            ExcelAddress SumAddress = new ExcelAddress(firstRowNumber, firstColumnNumber, lastRowNumber - 1, firstColumnNumber);
+            sheet.Cells[lastRowNumber, firstColumnNumber].Formula = $"SUM({SumAddress.Address})";
         }
         
+        internal static void AddSumFormula(ExcelWorksheet sheet, 
+                                            int setRow, int setColumn, 
+                                            int sumFirstRow, int sumFirstColumn, int sumLastRow, int sumLastCol,
+                                            bool isCurrency = true)
+        {
+            ExcelAddress SumAddress = new ExcelAddress(sumFirstRow, sumFirstColumn, sumLastRow, sumLastCol);
+            var cell = sheet.Cells[setRow, setColumn];
+            cell.Formula = $"SUM({SumAddress.Address})";
+            if(isCurrency)
+            {
+                cell.Style.Numberformat.Format = "£#,##0.00";
 
-
+            }
+        }
         #endregion
     }
 }

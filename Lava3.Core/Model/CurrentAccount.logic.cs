@@ -117,6 +117,7 @@ namespace Lava3.Core.Model
                     ccRows != null &&
                     localCategory.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))
             {
+                IsCreditCard = true;
                 IEnumerable<CreditCard> ccTransactions = ccRows.Where(w => w.PaidDate.Value == this.Date.Value);
                 decimal? paidTotal = 0;
                 if (ccTransactions == null || !ccTransactions.Any())
@@ -148,6 +149,7 @@ namespace Lava3.Core.Model
                         Category.Errors.Add("One or more transactions have not been categorised.");
                     }
                 }
+                CreditCardTransactions = ccTransactions;
             }
             else if (localCategory != null &&
                     !localCategory.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))

@@ -46,6 +46,7 @@ namespace Lava3.Core
 
         }
 
+        private string UnknonwnCategory = "??????";
         #region Kill
         public void KillAllExcel()
         {
@@ -439,7 +440,7 @@ namespace Lava3.Core
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCreditCard, stylenameHyperlink);
 
-            Common.DeleteRows(_SheetCreditCard,2);
+            Common.DeleteRows(_SheetCreditCard, 2);
             int rownum = 1;
             foreach (CreditCard item in CreditCardRows)
             {
@@ -533,17 +534,85 @@ namespace Lava3.Core
             #region Add Summary
             //Build summary Headers
             int summaryColumnHeaderNumber = 0;
+            var SummaryHeaders = "Date,Payee,Reconsiliation,Total Spent, VAT,Dividends,Salary,Expenses".Split(',').ToList();
+            foreach (CreditCard item in CreditCardRows)
+            {
+                if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
+                {
+                    if (!SummaryHeaders.Contains(UnknonwnCategory))
+                    {
+                        SummaryHeaders.Add(UnknonwnCategory);
+                    }
+                }
+                else if (!SummaryHeaders.Contains(item.Category.Value))
+                {
+                    SummaryHeaders.Add(item.Category.Value);
+                }
+            }
+            foreach (CurrentAccount item in CurrentAccountRows)
+            {
+                if (item.Description != null &&
+                    item.Description.Value.Equals("COMMERCIAL CARD", StringComparison.CurrentCultureIgnoreCase))
+                    continue;
 
-            foreach (string item in "Date,Payee,Reconsiliation,Total Spent, VAT,Dividends,Salary,Expenses".Split(','))
+                if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
+                {
+                    if (!SummaryHeaders.Contains(UnknonwnCategory))
+                    {
+                        SummaryHeaders.Add(UnknonwnCategory);
+                    }
+                    item.Category = new ColumnString() { Value = UnknonwnCategory };
+                }
+                else if (!SummaryHeaders.Contains(item.Category.Value))
+                {
+                    SummaryHeaders.Add(item.Category.Value);
+                }
+            }
+
+            foreach (string item in SummaryHeaders)
             {
                 summaryColumnHeaderNumber++;
-                chSummary.Add(item, new ColumnHeader() { Header = item, ColumnNumber = summaryColumnHeaderNumber });
+                chSummary.Add(item.Trim(), new ColumnHeader() { Header = item.Trim(), ColumnNumber = summaryColumnHeaderNumber });
             }
-            //TODO: add summary headers to sheet
+            //add summary headers to sheet
             Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
 
-            //TODO: add summary
-            //TODO: add summary Totals
+            //add summary
+            int summaryColumnsCount = chSummary.Count();
+            foreach (CurrentAccount currentAccount in CurrentAccountRows.Where(w => !w.IsDivider && !w.IsMonthlySummary && !w.IsStartingBalence))
+            {
+                rownum++;
+                decimal? TransactionAmount = currentAccount.Debit.Value + currentAccount.Credit.Value;
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, new ColumnString() { ColumnNumber = 2, Value = currentAccount.Description.Value });
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = 3, Value = TransactionAmount });
+                Common.AddSumFormula(_SheetAnnualSummary, rownum, 4, rownum, 5, rownum, summaryColumnsCount);
+                if (!currentAccount.IsCreditCard)
+                {
+                    int colnum = chSummary.Single(w => w.Key.Equals(currentAccount.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
+                    Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = TransactionAmount });
+                }
+                else
+                {
+                    foreach (CreditCard creditCard in currentAccount.CreditCardTransactions)
+                    {
+                        if (creditCard.Category == null || string.IsNullOrEmpty(creditCard.Category.Value))
+                        {
+                            creditCard.Category = new ColumnString() { Value = UnknonwnCategory };
+                        }
+
+                        int colnum = chSummary.Single(w => w.Key.Equals(creditCard.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
+                        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = creditCard.TransactionAmount.Value });
+                    }
+                }
+            }
+            //add summary Totals
+            rownum++;
+            for (int i = 3; i <= chSummary.Count(); i++)
+            {
+                Common.SetTotal(_SheetAnnualSummary, rownum, 5, i);
+            }
+            Common.SetRowColour(_SheetAnnualSummary, rownum, chSummary.Count(), Common.Colours.TotalsColour, true);
             #endregion
 
             #region Add expenses

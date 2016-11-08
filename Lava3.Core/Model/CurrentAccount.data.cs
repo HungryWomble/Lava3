@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Lava3.Core.DataTypes;
 
 namespace Lava3.Core.Model
@@ -19,5 +20,7 @@ namespace Lava3.Core.Model
         public bool IsMonthlySummary { get; set; }
         public bool IsDivider { get; set; }
         public bool IsStartingBalence { get; set; }
+        public bool IsCreditCard { get; set; }
+        public IEnumerable<CreditCard> CreditCardTransactions { get; set; }
     }
 }

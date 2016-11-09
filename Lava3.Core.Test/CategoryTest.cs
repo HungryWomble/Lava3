@@ -56,13 +56,13 @@ namespace Lava3.Test
             List<Category> actual = target.CategoryRows.ToList();
             target.SaveAndClose();
             Assert.IsNull(target.Package);
+            Assert.AreEqual(22, actual.Count);
 
 
             using (var Package = new ExcelPackage(new FileInfo(path)))
             {
                 ExcelWorksheet sheet = Package.Workbook.Worksheets[ExcelFile.eWorkSheetLabels.CategoryLookup];
-                Assert.AreEqual("Plural sight", sheet.Cells[2, 3].Text);
-                Assert.IsNotNull(sheet.Cells[3,1].Comment.Text);
+                Assert.AreEqual("blah", sheet.Cells[3, 3].Text);
             }
             //target = new ExcelFile();
             //target.ShowFile(path);

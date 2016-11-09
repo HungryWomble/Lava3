@@ -22,8 +22,9 @@ namespace Lava3.Test
             var target = new ExcelFile();
 
             target.OpenPackage(path);
-            target.LoadCreditCard();
+            target.LoadAndUpdateCreditCard();
             List<CreditCard> actual = target.CreditCardRows.ToList();
+            Assert.AreEqual(10, actual.Count);
             foreach (var item in actual)
             {
                 Assert.AreEqual(1, item.PaidDate.ColumnNumber);

@@ -31,7 +31,7 @@ namespace Lava3.Core.Model
             }
             else
             {
-                return $"{RowNumber} {Date} {Category} {Description} {Credit.Value-Debit.Value}";
+                return $"{RowNumber} {Date} {Category} {Description} {Credit.Value-Debit.Value} {IsCreditCard}";
             }
         }
 
@@ -89,7 +89,7 @@ namespace Lava3.Core.Model
             //
             Category localCategory = null;
             IEnumerable<Category> c;
-            c = categories.Where(w => w.Description.Value.Equals(Description.Value,
+            c = categories.Where(w => w.Description.Value.Trim().Equals(Description.Value.Trim(),
                                                            StringComparison.CurrentCultureIgnoreCase));
             if (!c.Any())
             {
@@ -162,11 +162,7 @@ namespace Lava3.Core.Model
                     NotesHyperLink = localCategory.NotesHyperLink;
                 }
             }
-            //if (string.IsNullOrEmpty(Category.Value))
-            //{
-            //    Category.Errors.Add("Missing Category");
-            //}
-
+          
 
         }
     }

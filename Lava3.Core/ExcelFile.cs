@@ -73,6 +73,7 @@ namespace Lava3.Core
                 }
             }
         }
+
         #endregion
 
         /// <summary>
@@ -88,12 +89,15 @@ namespace Lava3.Core
             Process.Start(path);
 
         }
+
+        #region properties
         public ExcelPackage Package { get; set; }
-        internal ExcelWorksheet _SheetCategories;
-        internal ExcelWorksheet _SheetCreditCard;
-        internal ExcelWorksheet _SheetCurrentAccount;
-        internal ExcelWorksheet _SheetCarMileage;
-        internal ExcelWorksheet _SheetAnnualSummary;
+
+        private ExcelWorksheet _SheetCategories;
+        private ExcelWorksheet _SheetCreditCard;
+        private ExcelWorksheet _SheetCurrentAccount;
+        private ExcelWorksheet _SheetCarMileage;
+        private ExcelWorksheet _SheetAnnualSummary;
         public IEnumerable<Category> CategoryRows { get; set; }
         public IEnumerable<CreditCard> CreditCardRows { get; set; }
         public IEnumerable<CurrentAccount> CurrentAccountRows { get; set; }
@@ -101,6 +105,7 @@ namespace Lava3.Core
         public IEnumerable<SummaryExpense> Expenses { get; set; }
         public Dictionary<string, ColumnHeader> CategoryColumns { get; set; }
         public CarMillageSummary MileageSummary { get; set; }
+        #endregion
         /// <summary>
         /// Open the excel Package
         /// </summary>
@@ -122,9 +127,10 @@ namespace Lava3.Core
             var columnHeaders = Common.GetColumnHeaders(_SheetCarMileage, 3);
             MileageSummary = new CarMillageSummary(_SheetCarMileage, columnHeaders);
         }
+        #region Load...
         public void LoadCurrentAccount()
         {
-            LoadCreditCard();
+            LoadAndUpdateCreditCard();
             _SheetCurrentAccount = Package.Workbook.Worksheets[eWorkSheetLabels.CurrentAccount];
             var columnHeaders = Common.GetColumnHeaders(_SheetCurrentAccount, 2);
             int rownum = 3;
@@ -218,9 +224,10 @@ namespace Lava3.Core
                     current.YearlyBalence.Errors.Add(msg);
                     current.Balence.Errors.Add(msg);
                 }
-
                 retval.Add(Rows[i]);
             }
+            
+
             CurrentAccountRows = retval;
         }
         /// <summary>
@@ -228,7 +235,7 @@ namespace Lava3.Core
         /// </summary>
         public void LoadCreditCard()
         {
-            LoadCategory();
+            LoadAndUpdateCategory();
 
             _SheetCreditCard = Package.Workbook.Worksheets[eWorkSheetLabels.CreditCard];
 
@@ -248,7 +255,7 @@ namespace Lava3.Core
         public void LoadAnnualSummary()
         {
             LoadCarSummary();
-            LoadCurrentAccount();
+            LoadAndUpdateCurrentAccount();
             _SheetAnnualSummary = Package.Workbook.Worksheets[eWorkSheetLabels.AnnualSummary];
             var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
             var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
@@ -287,31 +294,6 @@ namespace Lava3.Core
             Invoices = localInvoices;
             #endregion
         }
-        public void Save()
-        {
-            UpsertCatergory();
-            UpsertCreditCard();
-            UpsertCurrentAccount();
-            UpsertSummary();
-            Package.Save();
-        }
-
-        public void SaveAndClose()
-        {
-            Save();
-            ClosePackage();
-        }
-
-
-        public void ClosePackage()
-        {
-            if (Package != null)
-            {
-                Package.Dispose();
-            }
-            Package = null;
-
-        }
         /// <summary>
         /// Load the category into Memory
         /// </summary>
@@ -321,7 +303,7 @@ namespace Lava3.Core
 
             List<Category> accountingCategories = new List<Category>();
             int rownum = 1;
-            while (rownum < _SheetCategories.Dimension.Rows)
+            while (rownum <= _SheetCategories.Dimension.Rows)
             {
                 ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
                 if (!string.IsNullOrEmpty(description.Value))
@@ -374,6 +356,55 @@ namespace Lava3.Core
             }
 
             CategoryRows = accountingCategories;
+        }
+        #endregion
+
+        #region LoadAndUpdate
+
+        public void LoadAndUpdateCategory()
+        {
+            LoadCategory();
+            UpsertCatergory();
+        }
+
+        public void LoadAndUpdateCreditCard()
+        {
+            LoadCreditCard();
+            UpsertCreditCard();
+        }
+        public void LoadAndUpdateAnnualSummary()
+        {
+            LoadAnnualSummary();
+            UpsertAnnualSummary();
+        }
+
+        public void LoadAndUpdateCurrentAccount()
+        {
+            LoadCurrentAccount();
+            UpsertCurrentAccount();
+        }
+        #endregion
+
+        public void Save()
+        {
+            Package.Save();
+        }
+
+        public void SaveAndClose()
+        {
+            Save();
+            ClosePackage();
+        }
+
+
+        public void ClosePackage()
+        {
+            if (Package != null)
+            {
+                Package.Dispose();
+            }
+            Package = null;
+
         }
 
 
@@ -479,7 +510,7 @@ namespace Lava3.Core
 
 
             int rownum = 2;
-            foreach (CurrentAccount item in CurrentAccountRows)
+            foreach (var item in CurrentAccountRows)
             {
                 rownum++;
                 string CategoryMissing = "Category missing";
@@ -517,12 +548,12 @@ namespace Lava3.Core
             }
         }
 
-        private void UpsertSummary()
+        private void UpsertAnnualSummary()
         {
-            if (Expenses == null || !Expenses.Any()) return;
+          
             string stylenameHyperlink = "HyperLink";
             SummaryExpense FirstExpense = Expenses.First();
-            SummaryInvoice FirstInvoice = Invoices.First();
+            SummaryInvoice FirstInvoice = Invoices.FirstOrDefault();
             int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
             int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
             Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
@@ -532,24 +563,40 @@ namespace Lava3.Core
             int rownum = 4;
             Common.DeleteRows(_SheetAnnualSummary, 4);
             #region Add Summary
+
+
+            var caRows = CurrentAccountRows.Where(w => !w.IsDivider &&
+                                                       !w.IsMonthlySummary &&
+                                                       !w.IsStartingBalence).ToList();
+
+            caRows.Sort(delegate (CurrentAccount x, CurrentAccount y)
+            {
+                if (x.Description == null && y.Description == null) return 0;
+                else if (x.Description == null) return -1;
+                else if (y.Description == null) return 1;
+                else return x.Description.Value.CompareTo(y.Description.Value);
+            });
+            
             //Build summary Headers
             int summaryColumnHeaderNumber = 0;
-            var SummaryHeaders = "Date,Payee,Reconsiliation,Total Spent, VAT,Dividends,Salary,Expenses".Split(',').ToList();
-            foreach (CreditCard item in CreditCardRows)
+            List<string> SummaryHeaders = "Date,Payee,Reconsiliation,Total Spent,VAT,Dividends,Salary,Expenses,PAYE".Split(',').ToList();
+            List<string> SummaryHeaders2 = new List<string>();
+            foreach (CreditCard item in CreditCardRows.Where(w=>!SummaryHeaders.Any( a=>a.Equals(w.Category.Value,StringComparison.CurrentCultureIgnoreCase)) ))
             {
                 if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
                 {
-                    if (!SummaryHeaders.Contains(UnknonwnCategory))
+                    if (!SummaryHeaders2.Contains(UnknonwnCategory))
                     {
-                        SummaryHeaders.Add(UnknonwnCategory);
+                        SummaryHeaders2.Add(UnknonwnCategory);
                     }
                 }
-                else if (!SummaryHeaders.Contains(item.Category.Value))
+                else if (!SummaryHeaders2.Contains(item.Category.Value))
                 {
-                    SummaryHeaders.Add(item.Category.Value);
+                    SummaryHeaders2.Add(item.Category.Value);
                 }
             }
-            foreach (CurrentAccount item in CurrentAccountRows)
+
+            foreach (CurrentAccount item in caRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
             {
                 if (item.Description != null &&
                     item.Description.Value.Equals("COMMERCIAL CARD", StringComparison.CurrentCultureIgnoreCase))
@@ -557,30 +604,35 @@ namespace Lava3.Core
 
                 if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
                 {
-                    if (!SummaryHeaders.Contains(UnknonwnCategory))
+                    if (!SummaryHeaders2.Contains(UnknonwnCategory))
                     {
-                        SummaryHeaders.Add(UnknonwnCategory);
+                        SummaryHeaders2.Add(UnknonwnCategory);
                     }
                     item.Category = new ColumnString() { Value = UnknonwnCategory };
                 }
-                else if (!SummaryHeaders.Contains(item.Category.Value))
+                else if (!SummaryHeaders2.Contains(item.Category.Value))
                 {
-                    SummaryHeaders.Add(item.Category.Value);
+                    SummaryHeaders2.Add(item.Category.Value);
                 }
             }
+            SummaryHeaders2.Sort();
+            SummaryHeaders.AddRange(SummaryHeaders2);
 
             foreach (string item in SummaryHeaders)
             {
                 summaryColumnHeaderNumber++;
                 chSummary.Add(item.Trim(), new ColumnHeader() { Header = item.Trim(), ColumnNumber = summaryColumnHeaderNumber });
             }
+
             //add summary headers to sheet
             Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
 
             //add summary
-            int unknownCategoryColumn = chSummary.Single(s => s.Key.Equals(UnknonwnCategory)).Value.ColumnNumber;
+            
             int summaryColumnsCount = chSummary.Count();
-            foreach (CurrentAccount currentAccount in CurrentAccountRows.Where(w => !w.IsDivider && !w.IsMonthlySummary && !w.IsStartingBalence))
+            foreach (CurrentAccount currentAccount in caRows.Where(w => !w.IsDivider && 
+                                                                                    !w.IsMonthlySummary && 
+                                                                                    !w.IsStartingBalence))
             {
                 //Only processing the debits here
                 if (currentAccount.Debit.Value == 0)

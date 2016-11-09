@@ -306,6 +306,7 @@ namespace Lava3.Core
 
         public static int GetLastColumnNumber(object o)
         {
+            if (o == null) return 0;
             int retval = 1;
             foreach (PropertyInfo prop in o.GetType().GetProperties())
             {
@@ -323,6 +324,9 @@ namespace Lava3.Core
         }
         internal static void SetHeaders(ExcelWorksheet sheet, int rownum, Dictionary<string, ColumnHeader> headers, object o)
         {
+            if(o == null)
+                throw new ArgumentNullException("Parameter o is null.");
+
             int maxCol = 1;
             foreach (PropertyInfo prop in o.GetType().GetProperties())
             {

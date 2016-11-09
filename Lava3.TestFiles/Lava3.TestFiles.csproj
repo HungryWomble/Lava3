@@ -44,9 +44,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="TestFiles\Accounts.xlsx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Include="TestFiles\Dilbert 01.pdf">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

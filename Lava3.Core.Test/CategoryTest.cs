@@ -52,15 +52,16 @@ namespace Lava3.Test
             var target = new ExcelFile();
 
             target.OpenPackage(path);
-            target.LoadCategory();
+            target.LoadAndUpdateCategory();
             List<Category> actual = target.CategoryRows.ToList();
             target.SaveAndClose();
             Assert.IsNull(target.Package);
-            Assert.AreEqual(22, actual.Count);
-
+            Assert.AreEqual(21, actual.Count);
+            
 
             using (var Package = new ExcelPackage(new FileInfo(path)))
             {
+                
                 ExcelWorksheet sheet = Package.Workbook.Worksheets[ExcelFile.eWorkSheetLabels.CategoryLookup];
                 Assert.AreEqual("blah", sheet.Cells[3, 3].Text);
             }

@@ -67,7 +67,7 @@ namespace Lava3
             var excelFile = new ExcelFile();
             excelFile.OpenPackage(txtPath.Text);
 
-            excelFile.LoadCategory();
+            excelFile.LoadAndUpdateCategory();
             excelFile.SaveAndClose();
             this.Enabled = true;
         }
@@ -78,7 +78,7 @@ namespace Lava3
             var excelFile = new ExcelFile();
             excelFile.OpenPackage(txtPath.Text);
 
-            excelFile.LoadCreditCard();
+            excelFile.LoadAndUpdateCreditCard();
 
             excelFile.SaveAndClose();
             this.Enabled = true;
@@ -87,12 +87,11 @@ namespace Lava3
 
         private void btnCurrentAccount_Click(object sender, EventArgs e)
         {
-
             this.Enabled = false;
             var excelFile = new ExcelFile();
             excelFile.OpenPackage(txtPath.Text);
 
-            excelFile.LoadCurrentAccount();
+            excelFile.LoadAndUpdateCurrentAccount();
 
             excelFile.SaveAndClose();
             this.Enabled = true;
@@ -103,10 +102,9 @@ namespace Lava3
             this.Enabled = false;
             using (var excelFile = new ExcelFile(txtPath.Text))
             {
-                excelFile.LoadAnnualSummary();
+                excelFile.LoadAndUpdateAnnualSummary();
                 excelFile.SaveAndClose();
             }
-
             this.Enabled = true;
         }
     }

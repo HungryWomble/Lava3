@@ -31,7 +31,7 @@ namespace Lava3.Core.Model
             }
             else
             {
-                return $"{RowNumber} {Date} {Category} {Description} {Credit.Value-Debit.Value} {IsCreditCard}";
+                return $"{RowNumber} {Date} {Category} {Description} {Credit.Value-Debit.Value}";
             }
         }
 
@@ -127,9 +127,9 @@ namespace Lava3.Core.Model
                 else if (ccTransactions != null && ccTransactions.Any())
                 {
                     paidTotal = ccTransactions.Sum(s => s.TransactionAmount.Value);
-                    if (paidTotal + this.Debit.Value != 0)
+                    if (paidTotal - this.Debit.Value != 0)
                     {
-                        string errorMessage = "The value debited and the sum of the transactions in the catagory do not match.";
+                        string errorMessage = $"The value debited [{this.Debit.Value}] and the sum of the transactions [{paidTotal}] in the catagory do not match, there is a difference of [{paidTotal - this.Debit.Value }].";
                         Debit.Errors.Add(errorMessage);
                         Category.Errors.Add(errorMessage);
                     }

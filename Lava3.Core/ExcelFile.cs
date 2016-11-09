@@ -154,8 +154,8 @@ namespace Lava3.Core
 
 
             // sort by transaction date
-            Rows = Rows.OrderBy(o => o.Date.Value)
-                                                   .ToList();
+            Rows = Rows.OrderBy(o => o.Date.Value).ThenBy(t=>t.Description.Value).ToList();
+
             //Set the monthly and annual running totals.
             var retval = new List<CurrentAccount>();
             int currentMonth = -1;
@@ -240,541 +240,543 @@ namespace Lava3.Core
             _SheetCreditCard = Package.Workbook.Worksheets[eWorkSheetLabels.CreditCard];
 
             var columnHeaders = Common.GetColumnHeaders(_SheetCreditCard, 1);
-            var rows = new List<CreditCard>();
+            List<CreditCard> retval = new List<CreditCard>();
             int rownum = 1;
             while (rownum <= _SheetCreditCard.Dimension.Rows)
             {
                 rownum++;
                 CreditCard row = new CreditCard(_SheetCreditCard, columnHeaders, rownum, CategoryRows);
                 if (row.TransactionDate?.Value == null) continue;
-                rows.Add(row);
+                retval.Add(row);
             }
 
-           CreditCardRows = from r in rows
-                            orderby r.StatementDate.Value 
-                            orderby r.TransactionDate.Value                        
-                            select r;            
+            CreditCardRows = from r in retval
+                             orderby r.StatementDate.Value
+                             orderby r.TransactionDate.Value
+                             select r;
         }
-public void LoadAnnualSummary()
-{
-    LoadCarSummary();
-    LoadAndUpdateCurrentAccount();
-    _SheetAnnualSummary = Package.Workbook.Worksheets[eWorkSheetLabels.AnnualSummary];
-    var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
-    var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
-
-
-    #region Get the expences
-
-    int ExpenseStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Expenses, 1) + 3;
-    int ExpenseTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseStartRownumber);
-    List<SummaryExpense> localExpense = new List<SummaryExpense>();
-    if (ExpenseTotalRowNumer - ExpenseStartRownumber != 0)
-    {
-        for (int rownum = ExpenseStartRownumber; rownum < ExpenseTotalRowNumer; rownum++)
+        public void LoadAnnualSummary()
         {
-            SummaryExpense expense = new SummaryExpense(_SheetAnnualSummary, chExpences, rownum);
-            if (!string.IsNullOrEmpty(expense.Description.Value))
+            LoadCarSummary();
+            LoadAndUpdateCurrentAccount();
+            _SheetAnnualSummary = Package.Workbook.Worksheets[eWorkSheetLabels.AnnualSummary];
+            var chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
+            var chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+
+
+            #region Get the expences
+
+            int ExpenseStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Expenses, 1) + 3;
+            int ExpenseTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, ExpenseStartRownumber);
+            List<SummaryExpense> localExpense = new List<SummaryExpense>();
+            if (ExpenseTotalRowNumer - ExpenseStartRownumber != 0)
             {
-                localExpense.Add(expense);
-            }
-        }
-    }
-    Expenses = localExpense;
-    #endregion
-
-    #region get the invoices
-    int InvoiceStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Invoices, 1) + 2;
-    int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, InvoiceStartRownumber + 1);
-    List<SummaryInvoice> localInvoices = new List<SummaryInvoice>();
-    if (InvoiceTotalRowNumer - InvoiceStartRownumber != 0)
-    {
-        for (int rownum = InvoiceStartRownumber; rownum < InvoiceTotalRowNumer; rownum++)
-        {
-            localInvoices.Add(new SummaryInvoice(_SheetAnnualSummary, chInvoices, rownum));
-        }
-    }
-    Invoices = localInvoices;
-    #endregion
-}
-/// <summary>
-/// Load the category into Memory
-/// </summary>
-public void LoadCategory()
-{
-    CategoryColumns = Common.GetColumnHeaders(_SheetCategories, 1);
-
-    List<Category> accountingCategories = new List<Category>();
-    int rownum = 2;
-    while (rownum <= _SheetCategories.Dimension.Rows)
-    {
-        ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
-        if (!string.IsNullOrEmpty(description.Value))
-        {
-            var row = new Category()
-            {
-                Description = description,
-                AccountingCategory = new ColumnString(_SheetCategories, rownum, CategoryColumns["Category"]),
-                Notes = new ColumnString(_SheetCategories, rownum, CategoryColumns["Notes"])
-            };
-            if (_SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink != null)
-            {
-                row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink;
-            }
-
-            accountingCategories.Add(row);
-        }
-        rownum++;
-    }
-    if (!accountingCategories.Any())
-    {
-        throw new IndexOutOfRangeException("No Categories could be found");
-    }
-    //Sort by description
-    accountingCategories = accountingCategories.OrderBy(o => o.Description.Value).ToList();
-    // Set the duplicate flags
-    IEnumerable<string> duplicateDescriptions = accountingCategories
-                                .GroupBy(g => g.Description.Value)
-                                .Where(w => !string.IsNullOrEmpty(w.Key) && w.Count() > 1)
-                                .Select(s => s.Key);
-    foreach (string key in duplicateDescriptions)
-    {
-        foreach (Category c in accountingCategories.Where(w => !string.IsNullOrEmpty(w.Description.Value) &&
-                                                               w.Description.Value.Equals(key, StringComparison.CurrentCultureIgnoreCase)))
-        {
-            c.IsDuplicateDescription = true;
-        }
-    }
-    IEnumerable<string> duplicateNotes = accountingCategories
-                               .GroupBy(g => g.Notes.Value)
-                               .Where(w => !string.IsNullOrEmpty(w.Key) && w.Count() > 1)
-                               .Select(s => s.Key);
-    foreach (string key in duplicateNotes)
-    {
-        foreach (Category c in accountingCategories.Where(w => !string.IsNullOrEmpty(w.Notes.Value) &&
-                                                              w.Notes.Value.Equals(key, StringComparison.CurrentCultureIgnoreCase)))
-        {
-            c.IsDuplicateNotes = true;
-        }
-    }
-    accountingCategories.Sort(delegate (Category x, Category y)
-    {
-        if (x.Description == null && y.Description == null) return 0;
-        else if (x.Description == null) return -1;
-        else if (y.Description == null) return 1;
-        else return x.Description.Value.CompareTo(y.Description.Value);
-    });
-
-    CategoryRows = accountingCategories;
-}
-#endregion
-
-#region LoadAndUpdate
-
-public void LoadAndUpdateCategory()
-{
-    LoadCategory();
-    UpsertCatergory();
-}
-
-public void LoadAndUpdateCreditCard()
-{
-    LoadCreditCard();
-    UpsertCreditCard();
-}
-public void LoadAndUpdateAnnualSummary()
-{
-    LoadAnnualSummary();
-    UpsertAnnualSummary();
-}
-
-public void LoadAndUpdateCurrentAccount()
-{
-    LoadCurrentAccount();
-    UpsertCurrentAccount();
-}
-#endregion
-
-public void Save()
-{
-    Package.Save();
-}
-
-public void SaveAndClose()
-{
-    Save();
-    ClosePackage();
-}
-
-
-public void ClosePackage()
-{
-    if (Package != null)
-    {
-        Package.Dispose();
-    }
-    Package = null;
-
-}
-
-
-public void Dispose()
-{
-    ClosePackage();
-}
-private void CreateStyleHyperLink(ExcelWorksheet sheet, string stylename)
-{
-    try
-    {
-        ExcelNamedStyleXml styleHyperlink = sheet.Workbook.Styles.CreateNamedStyle(stylename);
-        styleHyperlink.Style.Font.UnderLine = true;
-        styleHyperlink.Style.Font.Color.SetColor(Color.Blue);
-    }
-    catch { }
-}
-
-/// <summary>
-/// 1. delete all rows in the category worksheet
-/// 2. Write rows from category list into category worksheet.
-/// </summary>
-private void UpsertCatergory()
-{
-
-    string stylenameHyperlink = "HyperLink";
-    CreateStyleHyperLink(_SheetCategories, stylenameHyperlink);
-
-    int rownum = 1;
-    Common.DeleteRows(_SheetCategories, 2);
-    foreach (Category item in CategoryRows)
-    {
-        rownum++;
-        Common.UpdateCellString(_SheetCategories, rownum, item.Description);
-        Common.UpdateCellString(_SheetCategories, rownum, item.AccountingCategory);
-
-        if (item.NotesHyperLink == null)
-        {
-            Common.UpdateCellString(_SheetCategories, rownum, item.Notes);
-        }
-        else
-        {
-            ExcelRange cell = _SheetCategories.Cells[rownum, item.Notes.ColumnNumber];
-            cell.Hyperlink = item.NotesHyperLink;
-            cell.StyleName = stylenameHyperlink;
-            cell.Value = item.Notes.Value;
-        }
-
-        if (item.IsDuplicateDescription)
-        {
-            Common.SetComment(_SheetCategories, rownum, item.Description.ColumnNumber, "Duplicate description.", Common.Colours.DuplicateColour);
-        }
-        if (item.IsDuplicateNotes)
-        {
-            Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Duplicate notes.", Common.Colours.DuplicateColour);
-        }
-    }
-}
-private void UpsertCreditCard()
-{
-    if (CreditCardRows == null) return;
-
-    //Create styles
-    string stylenameHyperlink = "HyperLink";
-    CreateStyleHyperLink(_SheetCreditCard, stylenameHyperlink);
-
-    Common.DeleteRows(_SheetCreditCard, 2);
-    int rownum = 1;
-    foreach (CreditCard item in CreditCardRows)
-    {
-        rownum++;
-        Common.UpdateCellDate(_SheetCreditCard, rownum, item.PaidDate);
-        Common.UpdateCellDate(_SheetCreditCard, rownum, item.StatementDate);
-        Common.UpdateCellDate(_SheetCreditCard, rownum, item.TransactionDate);
-        Common.UpdateCellString(_SheetCreditCard, rownum, item.TransactionDescription);
-        Common.UpdateCellString(_SheetCreditCard, rownum, item.Category);
-        Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.TransactionAmount);
-        Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.VatContent);
-        Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.Postage);
-        Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
-
-    }
-    //Create conditional formating
-    int categoryColumn = CreditCardRows.First().Category.ColumnNumber;
-    ExcelAddress categoryAddress = new ExcelAddress(2,
-                                                    categoryColumn,
-                                                    rownum - 1,
-                                                    categoryColumn);
-
-    var cf = _SheetCreditCard.ConditionalFormatting.AddContainsBlanks(categoryAddress);
-    cf.Style.Fill.BackgroundColor.Color = Common.Colours.ErrorColour;
-}
-private void UpsertCurrentAccount()
-{
-    if (CategoryRows == null ||
-        CreditCardRows == null ||
-        CurrentAccountRows == null) return;
-
-    Common.DeleteRows(_SheetCurrentAccount, 3);
-    //Create styles
-    string stylenameHyperlink = "HyperLink";
-    CreateStyleHyperLink(_SheetCurrentAccount, stylenameHyperlink);
-
-
-    int rownum = 2;
-    foreach (var item in CurrentAccountRows)
-    {
-        rownum++;
-        string CategoryMissing = "Category missing";
-        if (item.IsStartingBalence)
-        {
-            Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.StartingBalance, true);
-            CategoryMissing = null;
-        }
-        else if (item.IsDivider || item.IsMonthlySummary)
-        {
-            Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.DividerColour, true);
-            CategoryMissing = null;
-        }
-        Common.UpdateCellDate(_SheetCurrentAccount, rownum, item.Date);
-        Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Description);
-        Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
-        Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
-        Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
-        Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
-        Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
-        Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
-        Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
-
-        //Create conditional formating
-        int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
-        ExcelAddress categoryAddress = new ExcelAddress(rownum,
-                                                        categoryColumn,
-                                                        rownum,
-                                                        categoryColumn);
-
-
-        //Wrap category text
-        _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
-
-    }
-}
-
-private void UpsertAnnualSummary()
-{
-
-    string stylenameHyperlink = "HyperLink";
-    SummaryExpense FirstExpense = Expenses.First();
-    SummaryInvoice FirstInvoice = Invoices.FirstOrDefault();
-    int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
-    int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
-    Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
-    Dictionary<string, ColumnHeader> chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
-    Dictionary<string, ColumnHeader> chSummary = new Dictionary<string, ColumnHeader>();
-
-    int rownum = 4;
-    Common.DeleteRows(_SheetAnnualSummary, 4);
-    #region Add Summary
-
-
-    var caRows = CurrentAccountRows.Where(w => !w.IsDivider &&
-                                               !w.IsMonthlySummary &&
-                                               !w.IsStartingBalence).ToList();
-
-    caRows.Sort(delegate (CurrentAccount x, CurrentAccount y)
-    {
-        if (x.Description == null && y.Description == null) return 0;
-        else if (x.Description == null) return -1;
-        else if (y.Description == null) return 1;
-        else return x.Description.Value.CompareTo(y.Description.Value);
-    });
-
-    //Build summary Headers
-    int summaryColumnHeaderNumber = 0;
-    List<string> SummaryHeaders = "Date,Payee,Reconsiliation,Total Spent,VAT,Dividends,Salary,Expenses,PAYE".Split(',').ToList();
-    List<string> SummaryHeaders2 = new List<string>();
-    foreach (CreditCard item in CreditCardRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
-    {
-        if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
-        {
-            if (!SummaryHeaders2.Contains(UnknonwnCategory))
-            {
-                SummaryHeaders2.Add(UnknonwnCategory);
-            }
-        }
-        else if (!SummaryHeaders2.Contains(item.Category.Value))
-        {
-            SummaryHeaders2.Add(item.Category.Value);
-        }
-    }
-
-    foreach (CurrentAccount item in caRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
-    {
-        if (item.Description != null &&
-            item.Description.Value.Equals("COMMERCIAL CARD", StringComparison.CurrentCultureIgnoreCase))
-            continue;
-
-        if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
-        {
-            if (!SummaryHeaders2.Contains(UnknonwnCategory))
-            {
-                SummaryHeaders2.Add(UnknonwnCategory);
-            }
-            item.Category = new ColumnString() { Value = UnknonwnCategory };
-        }
-        else if (!SummaryHeaders2.Contains(item.Category.Value))
-        {
-            SummaryHeaders2.Add(item.Category.Value);
-        }
-    }
-    SummaryHeaders2.Sort();
-    SummaryHeaders.AddRange(SummaryHeaders2);
-
-    foreach (string item in SummaryHeaders)
-    {
-        summaryColumnHeaderNumber++;
-        chSummary.Add(item.Trim(), new ColumnHeader() { Header = item.Trim(), ColumnNumber = summaryColumnHeaderNumber });
-    }
-
-    //add summary headers to sheet
-    Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
-
-    //add summary
-
-    int summaryColumnsCount = chSummary.Count();
-    foreach (CurrentAccount currentAccount in caRows.Where(w => !w.IsDivider &&
-                                                                            !w.IsMonthlySummary &&
-                                                                            !w.IsStartingBalence))
-    {
-        //Only processing the debits here
-        if (currentAccount.Debit.Value == 0)
-            continue;
-        rownum++;
-
-        Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
-        Common.UpdateCellString(_SheetAnnualSummary, rownum, new ColumnString() { ColumnNumber = 2, Value = currentAccount.Description.Value });
-        Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, 3, $"D{rownum}-{currentAccount.Debit.Value}");
-
-        Common.AddSumFormula(_SheetAnnualSummary, rownum, 4, rownum, 5, rownum, summaryColumnsCount);
-        if (!currentAccount.IsCreditCard)
-        {
-            int colnum = chSummary.Single(w => w.Key.Equals(currentAccount.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
-            Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = currentAccount.Debit.Value });
-        }
-        else
-        {
-            foreach (CreditCard creditCard in currentAccount.CreditCardTransactions)
-            {
-                if (creditCard.Category == null || string.IsNullOrEmpty(creditCard.Category.Value))
+                for (int rownum = ExpenseStartRownumber; rownum < ExpenseTotalRowNumer; rownum++)
                 {
-                    creditCard.Category = new ColumnString() { Value = UnknonwnCategory };
+                    SummaryExpense expense = new SummaryExpense(_SheetAnnualSummary, chExpences, rownum);
+                    if (!string.IsNullOrEmpty(expense.Description.Value))
+                    {
+                        localExpense.Add(expense);
+                    }
+                }
+            }
+            Expenses = localExpense;
+            #endregion
+
+            #region get the invoices
+            int InvoiceStartRownumber = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.AnnualSummary.Invoices, 1) + 2;
+            int InvoiceTotalRowNumer = Common.GetRownumberForKey(_SheetAnnualSummary, eDescriptionKeys.Totals, 2, InvoiceStartRownumber + 1);
+            List<SummaryInvoice> localInvoices = new List<SummaryInvoice>();
+            if (InvoiceTotalRowNumer - InvoiceStartRownumber != 0)
+            {
+                for (int rownum = InvoiceStartRownumber; rownum < InvoiceTotalRowNumer; rownum++)
+                {
+                    localInvoices.Add(new SummaryInvoice(_SheetAnnualSummary, chInvoices, rownum));
+                }
+            }
+            Invoices = localInvoices;
+            #endregion
+        }
+        /// <summary>
+        /// Load the category into Memory
+        /// </summary>
+        public void LoadCategory()
+        {
+
+            _SheetCategories = Package.Workbook.Worksheets[eWorkSheetLabels.CategoryLookup];
+            CategoryColumns = Common.GetColumnHeaders(_SheetCategories, 1);
+
+            List<Category> accountingCategories = new List<Category>();
+            int rownum = 2;
+            while (rownum <= _SheetCategories.Dimension.Rows)
+            {
+                ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
+                if (!string.IsNullOrEmpty(description.Value))
+                {
+                    var row = new Category()
+                    {
+                        Description = description,
+                        AccountingCategory = new ColumnString(_SheetCategories, rownum, CategoryColumns["Category"]),
+                        Notes = new ColumnString(_SheetCategories, rownum, CategoryColumns["Notes"])
+                    };
+                    if (_SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink != null)
+                    {
+                        row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink;
+                    }
+
+                    accountingCategories.Add(row);
+                }
+                rownum++;
+            }
+            if (!accountingCategories.Any())
+            {
+                throw new IndexOutOfRangeException("No Categories could be found");
+            }
+            //Sort by description
+            accountingCategories = accountingCategories.OrderBy(o => o.Description.Value).ToList();
+            // Set the duplicate flags
+            IEnumerable<string> duplicateDescriptions = accountingCategories
+                                        .GroupBy(g => g.Description.Value)
+                                        .Where(w => !string.IsNullOrEmpty(w.Key) && w.Count() > 1)
+                                        .Select(s => s.Key);
+            foreach (string key in duplicateDescriptions)
+            {
+                foreach (Category c in accountingCategories.Where(w => !string.IsNullOrEmpty(w.Description.Value) &&
+                                                                       w.Description.Value.Equals(key, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    c.IsDuplicateDescription = true;
+                }
+            }
+            IEnumerable<string> duplicateNotes = accountingCategories
+                                       .GroupBy(g => g.Notes.Value)
+                                       .Where(w => !string.IsNullOrEmpty(w.Key) && w.Count() > 1)
+                                       .Select(s => s.Key);
+            foreach (string key in duplicateNotes)
+            {
+                foreach (Category c in accountingCategories.Where(w => !string.IsNullOrEmpty(w.Notes.Value) &&
+                                                                      w.Notes.Value.Equals(key, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    c.IsDuplicateNotes = true;
+                }
+            }
+            accountingCategories.Sort(delegate (Category x, Category y)
+            {
+                if (x.Description == null && y.Description == null) return 0;
+                else if (x.Description == null) return -1;
+                else if (y.Description == null) return 1;
+                else return x.Description.Value.CompareTo(y.Description.Value);
+            });
+
+            CategoryRows = accountingCategories;
+        }
+        #endregion
+
+        #region LoadAndUpdate
+
+        public void LoadAndUpdateCategory()
+        {
+            LoadCategory();
+            UpsertCatergory();
+        }
+
+        public void LoadAndUpdateCreditCard()
+        {
+            LoadCreditCard();
+            UpsertCreditCard();
+        }
+        public void LoadAndUpdateAnnualSummary()
+        {
+            LoadAnnualSummary();
+            UpsertAnnualSummary();
+        }
+
+        public void LoadAndUpdateCurrentAccount()
+        {
+            LoadCurrentAccount();
+            UpsertCurrentAccount();
+        }
+        #endregion
+
+        public void Save()
+        {
+            Package.Save();
+        }
+
+        public void SaveAndClose()
+        {
+            Save();
+            ClosePackage();
+        }
+
+
+        public void ClosePackage()
+        {
+            if (Package != null)
+            {
+                Package.Dispose();
+            }
+            Package = null;
+
+        }
+
+
+        public void Dispose()
+        {
+            ClosePackage();
+        }
+        private void CreateStyleHyperLink(ExcelWorksheet sheet, string stylename)
+        {
+            try
+            {
+                ExcelNamedStyleXml styleHyperlink = sheet.Workbook.Styles.CreateNamedStyle(stylename);
+                styleHyperlink.Style.Font.UnderLine = true;
+                styleHyperlink.Style.Font.Color.SetColor(Color.Blue);
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// 1. delete all rows in the category worksheet
+        /// 2. Write rows from category list into category worksheet.
+        /// </summary>
+        private void UpsertCatergory()
+        {
+
+            string stylenameHyperlink = "HyperLink";
+            CreateStyleHyperLink(_SheetCategories, stylenameHyperlink);
+
+            int rownum = 1;
+            Common.DeleteRows(_SheetCategories, 2);
+            foreach (Category item in CategoryRows)
+            {
+                rownum++;
+                Common.UpdateCellString(_SheetCategories, rownum, item.Description);
+                Common.UpdateCellString(_SheetCategories, rownum, item.AccountingCategory);
+
+                if (item.NotesHyperLink == null)
+                {
+                    Common.UpdateCellString(_SheetCategories, rownum, item.Notes);
+                }
+                else
+                {
+                    ExcelRange cell = _SheetCategories.Cells[rownum, item.Notes.ColumnNumber];
+                    cell.Hyperlink = item.NotesHyperLink;
+                    cell.StyleName = stylenameHyperlink;
+                    cell.Value = item.Notes.Value;
                 }
 
-                int colnum = chSummary.Single(w => w.Key.Equals(creditCard.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
-                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = creditCard.TransactionAmount.Value });
+                if (item.IsDuplicateDescription)
+                {
+                    Common.SetComment(_SheetCategories, rownum, item.Description.ColumnNumber, "Duplicate description.", Common.Colours.DuplicateColour);
+                }
+                if (item.IsDuplicateNotes)
+                {
+                    Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Duplicate notes.", Common.Colours.DuplicateColour);
+                }
+            }
+        }
+        private void UpsertCreditCard()
+        {
+            if (CreditCardRows == null) return;
+
+            //Create styles
+            string stylenameHyperlink = "HyperLink";
+            CreateStyleHyperLink(_SheetCreditCard, stylenameHyperlink);
+
+            Common.DeleteRows(_SheetCreditCard, 2);
+            int rownum = 1;
+            foreach (CreditCard item in CreditCardRows)
+            {
+                rownum++;
+                Common.UpdateCellDate(_SheetCreditCard, rownum, item.PaidDate);
+                Common.UpdateCellDate(_SheetCreditCard, rownum, item.StatementDate);
+                Common.UpdateCellDate(_SheetCreditCard, rownum, item.TransactionDate);
+                Common.UpdateCellString(_SheetCreditCard, rownum, item.TransactionDescription);
+                Common.UpdateCellString(_SheetCreditCard, rownum, item.Category);
+                Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.TransactionAmount);
+                Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.VatContent);
+                Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.Postage);
+                Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
+
+            }
+            //Create conditional formating
+            int categoryColumn = CreditCardRows.First().Category.ColumnNumber;
+            ExcelAddress categoryAddress = new ExcelAddress(2,
+                                                            categoryColumn,
+                                                            rownum - 1,
+                                                            categoryColumn);
+
+            var cf = _SheetCreditCard.ConditionalFormatting.AddContainsBlanks(categoryAddress);
+            cf.Style.Fill.BackgroundColor.Color = Common.Colours.ErrorColour;
+        }
+        private void UpsertCurrentAccount()
+        {
+            if (CategoryRows == null ||
+                CreditCardRows == null ||
+                CurrentAccountRows == null) return;
+
+            Common.DeleteRows(_SheetCurrentAccount, 3);
+            //Create styles
+            string stylenameHyperlink = "HyperLink";
+            CreateStyleHyperLink(_SheetCurrentAccount, stylenameHyperlink);
+
+
+            int rownum = 2;
+            foreach (var item in CurrentAccountRows)
+            {
+                rownum++;
+                string CategoryMissing = "Category missing";
+                if (item.IsStartingBalence)
+                {
+                    Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.StartingBalance, true);
+                    CategoryMissing = null;
+                }
+                else if (item.IsDivider || item.IsMonthlySummary)
+                {
+                    Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.DividerColour, true);
+                    CategoryMissing = null;
+                }
+                Common.UpdateCellDate(_SheetCurrentAccount, rownum, item.Date);
+                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Description);
+                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
+                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
+                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
+                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
+                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
+                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
+                Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
+
+                //Create conditional formating
+                int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
+                ExcelAddress categoryAddress = new ExcelAddress(rownum,
+                                                                categoryColumn,
+                                                                rownum,
+                                                                categoryColumn);
+
+
+                //Wrap category text
+                _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+
             }
         }
 
+        private void UpsertAnnualSummary()
+        {
 
-    }
+            string stylenameHyperlink = "HyperLink";
+            SummaryExpense FirstExpense = Expenses.First();
+            SummaryInvoice FirstInvoice = Invoices.FirstOrDefault();
+            int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
+            int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
+            Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
+            Dictionary<string, ColumnHeader> chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
+            Dictionary<string, ColumnHeader> chSummary = new Dictionary<string, ColumnHeader>();
 
-    //add summary Totals
-    rownum++;
-    for (int i = 3; i <= chSummary.Count(); i++)
-    {
-        Common.SetTotal(_SheetAnnualSummary, rownum, 5, i);
-    }
-    Common.SetRowColour(_SheetAnnualSummary, rownum, chSummary.Count(), Common.Colours.TotalsColour, true);
-    #endregion
-
-    #region Add expenses
-    rownum += 3;
-    //Add header
-    Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                            new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Expenses },
-                            "",
-                            true);
-    //////
-    rownum++;
-    Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                            new ColumnString()
-                            {
-                                ColumnNumber = Expenses.First().VAT.ColumnNumber,
-                                Value = "If applicable"
-                            },
-                            "",
-                            false);
+            int rownum = 4;
+            Common.DeleteRows(_SheetAnnualSummary, 4);
+            #region Add Summary
 
 
-    Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.HeaderColour, true);
-    //////
-    rownum++;
-    int firstExpenseRow = rownum;
-    Common.SetHeaders(_SheetAnnualSummary, rownum, chExpences, FirstExpense);
+            var caRows = CurrentAccountRows.Where(w => !w.IsDivider &&
+                                                       !w.IsMonthlySummary &&
+                                                       !w.IsStartingBalence).ToList();
 
-    foreach (SummaryExpense expense in Expenses)
-    {
-        rownum++;
-        Common.UpdateCellDate(_SheetAnnualSummary, rownum, expense.Date);
-        Common.UpdateCellString(_SheetAnnualSummary, rownum, expense.Description);
-        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.Value);
-        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.VAT);
-        var SumAddress = new ExcelAddress(rownum, 3, rownum, 3);
-        var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
-        _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
-    }
-    rownum += 2;
+            caRows.Sort(delegate (CurrentAccount x, CurrentAccount y)
+            {
+                if (x.Description == null && y.Description == null) return 0;
+                else if (x.Description == null) return -1;
+                else if (y.Description == null) return 1;
+                else return x.Description.Value.CompareTo(y.Description.Value);
+            });
 
-    //Expenses Total row
-    _SheetAnnualSummary.Cells[rownum, FirstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
-    for (int i = 3; i <= chExpences.Count(); i++)
-    {
-        Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
-    }
-    ExcelAddress TotalOwedAddress = new ExcelAddress(rownum, 4, rownum, 4);
-    ExcelAddress TotalExpenseAddress = new ExcelAddress(rownum, 3, rownum, 3);
-    string totalOwedFormula = $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
-    _SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula = totalOwedFormula;
+            //Build summary Headers
+            int summaryColumnHeaderNumber = 0;
+            List<string> SummaryHeaders = "Date,Payee,Reconsiliation,Total Spent,VAT,Dividends,Salary,Expenses,PAYE".Split(',').ToList();
+            List<string> SummaryHeaders2 = new List<string>();
+            foreach (CreditCard item in CreditCardRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
+            {
+                if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
+                {
+                    if (!SummaryHeaders2.Contains(UnknonwnCategory))
+                    {
+                        SummaryHeaders2.Add(UnknonwnCategory);
+                    }
+                }
+                else if (!SummaryHeaders2.Contains(item.Category.Value))
+                {
+                    SummaryHeaders2.Add(item.Category.Value);
+                }
+            }
 
-    Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.TotalsColour, true);
-    rownum += 2;
-    #endregion
+            foreach (CurrentAccount item in caRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
+            {
+                if (item.Description != null &&
+                    item.Description.Value.Equals("COMMERCIAL CARD", StringComparison.CurrentCultureIgnoreCase))
+                    continue;
 
-    #region Add Invoices
+                if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
+                {
+                    if (!SummaryHeaders2.Contains(UnknonwnCategory))
+                    {
+                        SummaryHeaders2.Add(UnknonwnCategory);
+                    }
+                    item.Category = new ColumnString() { Value = UnknonwnCategory };
+                }
+                else if (!SummaryHeaders2.Contains(item.Category.Value))
+                {
+                    SummaryHeaders2.Add(item.Category.Value);
+                }
+            }
+            SummaryHeaders2.Sort();
+            SummaryHeaders.AddRange(SummaryHeaders2);
 
-    Common.UpdateCellString(_SheetAnnualSummary, rownum,
-                            new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Invoices },
-                            "",
-                            true);
-    rownum++;
-    //Set the expense header
-    Common.SetHeaders(_SheetAnnualSummary, rownum, chInvoices, FirstInvoice);
+            foreach (string item in SummaryHeaders)
+            {
+                summaryColumnHeaderNumber++;
+                chSummary.Add(item.Trim(), new ColumnHeader() { Header = item.Trim(), ColumnNumber = summaryColumnHeaderNumber });
+            }
+
+            //add summary headers to sheet
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chSummary);
+
+            //add summary
+
+            int summaryColumnsCount = chSummary.Count();
+            foreach (CurrentAccount currentAccount in caRows.Where(w => !w.IsDivider &&
+                                                                                    !w.IsMonthlySummary &&
+                                                                                    !w.IsStartingBalence))
+            {
+                //Only processing the debits here
+                if (currentAccount.Debit.Value == 0)
+                    continue;
+                rownum++;
+
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, new ColumnString() { ColumnNumber = 2, Value = currentAccount.Description.Value });
+                Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, 3, $"D{rownum}-{currentAccount.Debit.Value}");
+
+                Common.AddSumFormula(_SheetAnnualSummary, rownum, 4, rownum, 5, rownum, summaryColumnsCount);
+                if (!currentAccount.IsCreditCard)
+                {
+                    int colnum = chSummary.Single(w => w.Key.Equals(currentAccount.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
+                    Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = currentAccount.Debit.Value });
+                }
+                else
+                {
+                    foreach (CreditCard creditCard in currentAccount.CreditCardTransactions)
+                    {
+                        if (creditCard.Category == null || string.IsNullOrEmpty(creditCard.Category.Value))
+                        {
+                            creditCard.Category = new ColumnString() { Value = UnknonwnCategory };
+                        }
+
+                        int colnum = chSummary.Single(w => w.Key.Equals(creditCard.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
+                        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = creditCard.TransactionAmount.Value });
+                    }
+                }
 
 
-    //set the expense data
-    int FirstInvoiceRow = rownum + 1;
-    foreach (SummaryInvoice invoice in Invoices)
-    {
-        rownum++;
-        Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
-        Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink);
-        Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoiceDate);
-        Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
-        Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);
-        Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.HoursInvoiced);
-        Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysInvoiced);
-        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.InvoiceAmount);
-        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.TotalPaid);
-        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.DayRate);
-    }
-    rownum += 2;
-    //Invoice Total Row
-    _SheetAnnualSummary.Cells[rownum, FirstInvoice.Customer.ColumnNumber].Value = eDescriptionKeys.Totals;
-    Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.HoursInvoiced.ColumnNumber);
-    Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.DaysInvoiced.ColumnNumber);
-    Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.InvoiceAmount.ColumnNumber);
-    Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.TotalPaid.ColumnNumber);
-    Common.SetRowColour(_SheetAnnualSummary, rownum, LastInvoiceColumnNumber, Common.Colours.TotalsColour, true);
-    #endregion
+            }
 
-}
+            //add summary Totals
+            rownum++;
+            for (int i = 3; i <= chSummary.Count(); i++)
+            {
+                Common.SetTotal(_SheetAnnualSummary, rownum, 5, i);
+            }
+            Common.SetRowColour(_SheetAnnualSummary, rownum, chSummary.Count(), Common.Colours.TotalsColour, true);
+            #endregion
+
+            #region Add expenses
+            rownum += 3;
+            //Add header
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Expenses },
+                                    "",
+                                    true);
+            //////
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString()
+                                    {
+                                        ColumnNumber = Expenses.First().VAT.ColumnNumber,
+                                        Value = "If applicable"
+                                    },
+                                    "",
+                                    false);
+
+
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.HeaderColour, true);
+            //////
+            rownum++;
+            int firstExpenseRow = rownum;
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chExpences, FirstExpense);
+
+            foreach (SummaryExpense expense in Expenses)
+            {
+                rownum++;
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, expense.Date);
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, expense.Description);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.Value);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.VAT);
+                var SumAddress = new ExcelAddress(rownum, 3, rownum, 3);
+                var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
+                _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
+            }
+            rownum += 2;
+
+            //Expenses Total row
+            _SheetAnnualSummary.Cells[rownum, FirstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
+            for (int i = 3; i <= chExpences.Count(); i++)
+            {
+                Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
+            }
+            ExcelAddress TotalOwedAddress = new ExcelAddress(rownum, 4, rownum, 4);
+            ExcelAddress TotalExpenseAddress = new ExcelAddress(rownum, 3, rownum, 3);
+            string totalOwedFormula = $"{TotalExpenseAddress}+{_SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula}";
+            _SheetAnnualSummary.Cells[TotalOwedAddress.Address].Formula = totalOwedFormula;
+
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastExpenseColumnNumber, Common.Colours.TotalsColour, true);
+            rownum += 2;
+            #endregion
+
+            #region Add Invoices
+
+            Common.UpdateCellString(_SheetAnnualSummary, rownum,
+                                    new ColumnString() { ColumnNumber = 1, Value = eDescriptionKeys.AnnualSummary.Invoices },
+                                    "",
+                                    true);
+            rownum++;
+            //Set the expense header
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chInvoices, FirstInvoice);
+
+
+            //set the expense data
+            int FirstInvoiceRow = rownum + 1;
+            foreach (SummaryInvoice invoice in Invoices)
+            {
+                rownum++;
+                Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
+                Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink);
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoiceDate);
+                Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.HoursInvoiced);
+                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysInvoiced);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.InvoiceAmount);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.TotalPaid);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.DayRate);
+            }
+            rownum += 2;
+            //Invoice Total Row
+            _SheetAnnualSummary.Cells[rownum, FirstInvoice.Customer.ColumnNumber].Value = eDescriptionKeys.Totals;
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.HoursInvoiced.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.DaysInvoiced.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.InvoiceAmount.ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.TotalPaid.ColumnNumber);
+            Common.SetRowColour(_SheetAnnualSummary, rownum, LastInvoiceColumnNumber, Common.Colours.TotalsColour, true);
+            #endregion
+
+        }
     }
 }

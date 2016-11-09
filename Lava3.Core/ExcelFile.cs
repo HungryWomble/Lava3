@@ -302,7 +302,7 @@ namespace Lava3.Core
             CategoryColumns = Common.GetColumnHeaders(_SheetCategories, 1);
 
             List<Category> accountingCategories = new List<Category>();
-            int rownum = 1;
+            int rownum = 2;
             while (rownum <= _SheetCategories.Dimension.Rows)
             {
                 ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
@@ -354,6 +354,13 @@ namespace Lava3.Core
                     c.IsDuplicateNotes = true;
                 }
             }
+            accountingCategories.Sort(delegate (Category x, Category y)
+            {
+                if (x.Description == null && y.Description == null) return 0;
+                else if (x.Description == null) return -1;
+                else if (y.Description == null) return 1;
+                else return x.Description.Value.CompareTo(y.Description.Value);
+            });
 
             CategoryRows = accountingCategories;
         }

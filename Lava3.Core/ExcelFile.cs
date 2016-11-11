@@ -155,8 +155,9 @@ namespace Lava3.Core
 
             // sort by transaction date
             Rows = Rows.OrderBy(o => o.Date.Value).ThenBy(t=>t.Description.Value).ToList();
-
-            //Set the monthly and annual running totals.
+            // Add dummy row to the end of rows so we get month end.
+            
+            // Set the monthly and annual running totals.
             var retval = new List<CurrentAccount>();
             int currentMonth = -1;
             int previousMonth = ((DateTime)Rows[1].Date.Value).Month;
@@ -174,37 +175,7 @@ namespace Lava3.Core
                 NewRowNumber++;
                 if (currentMonth != previousMonth)
                 {
-                    var monthSummary = new CurrentAccount()
-                    {
-                        IsMonthlySummary = true,
-                        RowNumber = NewRowNumber,
-                        Notes = new ColumnString() { ColumnNumber = current.Notes.ColumnNumber },
-                        Debit = new ColumnDecimal()
-                        {
-                            ColumnNumber = current.Notes.ColumnNumber,
-                            Value = MonthlyDebit
-                        },
-                        Credit = new ColumnDecimal()
-                        {
-                            ColumnNumber = current.Notes.ColumnNumber,
-                            Value = MonthlyCredit
-                        }
-                    };
-                    retval.Add(monthSummary);
-                    //
-                    NewRowNumber++;
-
-                    retval.Add(new CurrentAccount()
-                    {
-                        IsDivider = true,
-                        RowNumber = NewRowNumber,
-                        Notes = new ColumnString() { ColumnNumber = current.Notes.ColumnNumber }
-                    });
-                    NewRowNumber++;
-
-                    MonthlyTotal = 0m;
-                    MonthlyDebit = 0;
-                    MonthlyCredit = 0;
+                    AddCurrentAccountMonthDivider(retval, ref NewRowNumber, ref MonthlyDebit, ref MonthlyCredit, columnHeaders, MonthlyTotal);
                 }
                 current.RowNumber = NewRowNumber;
                 decimal? transactionBalence = current.Credit.Value + current.Debit.Value;
@@ -226,10 +197,46 @@ namespace Lava3.Core
                 }
                 retval.Add(Rows[i]);
             }
-
+            AddCurrentAccountMonthDivider(retval, ref NewRowNumber, ref MonthlyDebit, ref MonthlyCredit, columnHeaders, MonthlyTotal);
 
             CurrentAccountRows = retval;
         }
+
+        private static void AddCurrentAccountMonthDivider(List<CurrentAccount> retval, 
+                                                        ref int NewRowNumber, 
+                                                        ref decimal? MonthlyDebit, 
+                                                        ref decimal? MonthlyCredit,
+                                                        Dictionary<string, ColumnHeader> ch, 
+                                                        decimal? MonthlyTotal)
+        {
+
+            var monthSummary = new CurrentAccount()
+            {
+                IsMonthlySummary = true,
+                IsDivider = false,
+                RowNumber = NewRowNumber,
+                Notes = new ColumnString() { ColumnNumber = ch["Notes"].ColumnNumber },
+                Debit = new ColumnDecimal() { ColumnNumber = ch["Debit"].ColumnNumber ,Value=0},
+                Credit = new ColumnDecimal() { ColumnNumber = ch["Credit"].ColumnNumber, Value = 0 }
+            };
+
+            retval.Add(monthSummary);
+            //
+            NewRowNumber++;
+            retval.Add(new CurrentAccount()
+            {
+                IsMonthlySummary = false,
+                IsDivider = true,
+                RowNumber = NewRowNumber,
+                Notes = new ColumnString() { ColumnNumber = ch["Notes"].ColumnNumber }
+            });
+            NewRowNumber++;
+
+            MonthlyTotal = 0m;
+            MonthlyDebit = 0;
+            MonthlyCredit = 0;
+        }
+
         /// <summary>
         /// Load the credit card into memory
         /// </summary>
@@ -522,6 +529,9 @@ namespace Lava3.Core
 
 
             int rownum = 2;
+            int rowMonthStart = 0;
+            int colDebit = CurrentAccountRows.First(f=>!f.IsMonthlySummary && !f.IsDivider).Debit.ColumnNumber;
+            int colCredit = CurrentAccountRows.First(f => !f.IsMonthlySummary && !f.IsDivider).Credit.ColumnNumber;
             foreach (var item in CurrentAccountRows)
             {
                 rownum++;
@@ -530,6 +540,7 @@ namespace Lava3.Core
                 {
                     Common.SetRowColour(_SheetCurrentAccount, rownum, item.Notes.ColumnNumber, Common.Colours.StartingBalance, true);
                     CategoryMissing = null;
+                    rowMonthStart = rownum+1;
                 }
                 else if (item.IsDivider || item.IsMonthlySummary)
                 {
@@ -547,16 +558,26 @@ namespace Lava3.Core
                 Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
 
                 //Create conditional formating
-                int categoryColumn = CurrentAccountRows.Last().Category.ColumnNumber;
-                ExcelAddress categoryAddress = new ExcelAddress(rownum,
-                                                                categoryColumn,
-                                                                rownum,
-                                                                categoryColumn);
-
-
-                //Wrap category text
-                _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
-
+                if (item.Category != null)
+                {
+                    int categoryColumn = item.Category.ColumnNumber;
+                    ExcelAddress categoryAddress = new ExcelAddress(rownum,
+                                                                    categoryColumn,
+                                                                    rownum,
+                                                                    categoryColumn);
+                    //Wrap category text
+                    _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+                }
+                if(item.IsMonthlySummary)
+                {
+                    Common.AddSumFormula(_SheetCurrentAccount, rownum, colDebit, rowMonthStart, colDebit, rownum - 1, colDebit, true);
+                    Common.AddSumFormula(_SheetCurrentAccount, rownum, colCredit, rowMonthStart, colCredit, rownum - 1, colCredit, true);
+                    rowMonthStart = rownum + 1;
+                }
+                else if(item.IsDivider)
+                {
+                    rowMonthStart = rownum+1;
+                }
             }
         }
 

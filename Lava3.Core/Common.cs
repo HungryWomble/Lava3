@@ -379,8 +379,9 @@ namespace Lava3.Core
                                             int sumFirstRow, int sumFirstColumn, int sumLastRow, int sumLastCol,
                                             bool isCurrency = true)
         {
-            ExcelAddress SumAddress = new ExcelAddress(sumFirstRow, sumFirstColumn, sumLastRow, sumLastCol);
             var cell = sheet.Cells[setRow, setColumn];
+            cell.Value = 0;
+            ExcelAddress SumAddress = new ExcelAddress(sumFirstRow, sumFirstColumn, sumLastRow, sumLastCol);
             cell.Formula = $"SUM({SumAddress.Address})";
             if(isCurrency)
             {

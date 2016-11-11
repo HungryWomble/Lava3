@@ -241,3 +241,4 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 /Lava3.TestFiles/TestFiles/Accounts.01.xlsx
+/Lava3.TestFiles/TestFiles/Accounts.xlsx

@@ -33,6 +33,12 @@ namespace Lava3.Core.Model
                 DayRate = new ColumnDecimal(sheet, rownum, ch["Day Rate"]);
                 DayRate.Value = InvoiceAmount.Value / DaysInvoiced.Value;                
             }
+            ExcelAddress invoiceRange = new ExcelAddress(rownum, InvoiceName.ColumnNumber, rownum, InvoiceName.ColumnNumber);
+
+            if(sheet.Cells[invoiceRange.Address].Hyperlink !=null)
+            {
+                this.InvoiceNameHyperLink = sheet.Cells[invoiceRange.Address].Hyperlink;
+            }
         }
 
         public override string ToString()

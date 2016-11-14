@@ -589,7 +589,7 @@ namespace Lava3.Core
 
             string stylenameHyperlink = "HyperLink";
             SummaryExpense FirstExpense = Expenses.First();
-            SummaryInvoice FirstInvoice = Invoices.FirstOrDefault();
+            SummaryInvoice FirstInvoice = Invoices.First();
             int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
             int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
             Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
@@ -734,7 +734,7 @@ namespace Lava3.Core
             //////
             rownum++;
             int firstExpenseRow = rownum;
-            Common.SetHeaders(_SheetAnnualSummary, rownum, chExpences, FirstExpense);
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chExpences);
 
             foreach (SummaryExpense expense in Expenses)
             {
@@ -779,6 +779,7 @@ namespace Lava3.Core
             int FirstInvoiceRow = rownum + 1;
             foreach (SummaryInvoice invoice in Invoices)
             {
+                if (string.IsNullOrEmpty(invoice.InvoiceName.Value)) continue;
                 rownum++;
                 Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
                 Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink);

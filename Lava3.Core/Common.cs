@@ -49,7 +49,7 @@ namespace Lava3.Core
         #endregion
         public static int GetRownumberForKey(ExcelWorksheet sheet, string seperatorkey, int colnum, int startRowNumber = 1)
         {
-            for (int rownum = startRowNumber; rownum < sheet.Dimension.Rows; rownum++)
+            for (int rownum = startRowNumber; rownum <= sheet.Dimension.Rows; rownum++)
             {
                 string key = Common.ReplaceNullOrEmpty(sheet.Cells[rownum, colnum].Value);
                 if (key.Equals(seperatorkey, StringComparison.CurrentCultureIgnoreCase))
@@ -168,7 +168,7 @@ namespace Lava3.Core
         public static class Colours
         {
             public static System.Drawing.Color DuplicateColour { get { return System.Drawing.Color.LightGreen; } }
-            public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
+           public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
             public static System.Drawing.Color DividerColour { get { return System.Drawing.Color.LightBlue; } }
             public static System.Drawing.Color TotalsColour { get { return System.Drawing.Color.LightBlue; } }
             public static System.Drawing.Color HeaderColour { get { return System.Drawing.Color.LightGray; } }
@@ -192,10 +192,6 @@ namespace Lava3.Core
         private static void WriteErrors(ExcelWorksheet sheet, int rownum, ColumnString field, string isBlankErrorMessage = null)
         {
             WriteErrors(sheet, rownum, field.ColumnNumber, field.Errors, isBlankErrorMessage);
-            ExcelAddress cellAddress = new ExcelAddress(rownum,
-                                                        field.ColumnNumber,
-                                                        rownum,
-                                                        field.ColumnNumber);
 
         }
         private static void WriteErrors(ExcelWorksheet sheet,
@@ -227,8 +223,10 @@ namespace Lava3.Core
                 {
                     sb.AppendLine(error);
                 }
-
-                SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
+                if (!string.IsNullOrEmpty(sb.ToString()))
+                {
+                    SetComment(sheet, rownum, colnum, sb.ToString(), Colours.ErrorColour);
+                }
             }
         }
         #endregion

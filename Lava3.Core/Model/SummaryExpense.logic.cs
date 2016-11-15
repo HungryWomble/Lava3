@@ -22,7 +22,8 @@ namespace Lava3.Core.Model
             foreach (var header in ch)
             {
                 int colnum = header.Value.ColumnNumber;
-                if (colnum <= VAT.ColumnNumber)
+                if (colnum <= VAT.ColumnNumber &&
+                    colnum != ch["Total Owed To Director"].ColumnNumber)
                     continue;
                 ExcelRange cell = sheet.Cells[rownum, colnum];
 
@@ -42,6 +43,11 @@ namespace Lava3.Core.Model
                     break;
                 }
             }
+            //if (this.IsExpenseRefund)
+            //{
+            //    this.Value = ExcelRange cell = sheet.Cells[rownum, colnum];
+            //}
+
 
         }
 
@@ -50,8 +56,19 @@ namespace Lava3.Core.Model
             if (Description == null)
                 return base.ToString();
 
-            return $"{Date} | {Description.Value.PadRight(25).Substring(0,25)} |{Category}";
+            return $"{Date} | {Description.Value.PadRight(25).Substring(0, 25)} |{Category}";
 
+        }
+        /// <summary>
+        /// Is this expense a refund
+        /// </summary>
+        public bool IsExpenseRefund
+        {
+            get
+            {
+                return Description.Value.ToLower().Contains("expense paid") ||
+                       Description.Value.ToLower().Contains("expenses paid");
+            }
         }
     }
 }

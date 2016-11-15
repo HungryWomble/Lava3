@@ -471,10 +471,10 @@ namespace Lava3.Core
                     cell.StyleName = stylenameHyperlink;
                     cell.Value = item.Notes.Value;
                     //check file location
-                    string path = Path.GetFullPath( Path.Combine(Package.File.Directory.FullName,cell.Hyperlink.OriginalString));
-                    if(!File.Exists(path))
+                    string path = Path.GetFullPath(Path.Combine(Package.File.Directory.FullName, cell.Hyperlink.OriginalString));
+                    if (!File.Exists(path))
                     {
-                        Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Can not resolve hyperlink.", Common.Colours.ErrorColour);                        
+                        Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Can not resolve hyperlink.", Common.Colours.ErrorColour);
                     }
                 }
 
@@ -577,7 +577,7 @@ namespace Lava3.Core
                     //Wrap category text
                     _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
                 }
-                if (item.IsMonthlySummary && rownum>rowMonthStart)
+                if (item.IsMonthlySummary && rownum > rowMonthStart)
                 {
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colDebit, rowMonthStart, colDebit, rownum - 1, colDebit, true);
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colCredit, rowMonthStart, colCredit, rownum - 1, colCredit, true);
@@ -679,9 +679,9 @@ namespace Lava3.Core
                                                                         !w.IsStartingBalence &&
                                                                         !w.IsInvoicePaid &&
                                                                         !w.IsDontMap &&
-                                                                        w.Debit.Value !=0))
+                                                                        w.Debit.Value != 0))
             {
-              
+
                 rownum++;
 
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
@@ -697,7 +697,7 @@ namespace Lava3.Core
                     {
                         if (ts.Description == null || string.IsNullOrEmpty(ts.Description))
                         {
-                            ts.Description = UnknonwnCategory ;
+                            ts.Description = UnknonwnCategory;
                         }
 
                         int colnum = chSummary.Single(w => w.Key.Equals(ts.Description, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
@@ -752,8 +752,15 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.Value);
                 Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, expense.VAT);
                 var SumAddress = new ExcelAddress(rownum, 3, rownum, 3);
-                var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
-                _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
+                if (expense.IsExpenseRefund)
+                {
+                    _SheetAnnualSummary.Cells[SumAddress.Address].Value = 0;
+                }
+                else
+                {
+                    var SumRange = new ExcelAddress(rownum, 4, rownum, chExpences.Count());
+                    _SheetAnnualSummary.Cells[SumAddress.Address].Formula = $"SUM({SumRange.Address})";
+                }
             }
             rownum += 2;
 

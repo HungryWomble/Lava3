@@ -16,7 +16,6 @@ namespace Lava3.Core.Model
         public ColumnDecimal Value { get;set;}
         public ColumnDateTime Date { get; set; }
         public ColumnDecimal VAT { get; set; }
-        public bool IsExpenseRefund { get; set; }
         public ColumnString Category { get; set; }
     }
 }

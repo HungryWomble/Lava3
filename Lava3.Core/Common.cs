@@ -294,7 +294,7 @@ namespace Lava3.Core
                 cellRange.StyleName = stylenameHyperlink;
                 cellRange.Value = cell.Value;
                 //check file location
-                string path = Path.GetFullPath(Path.Combine(packageDirectory, cellRange.Hyperlink.OriginalString));
+                string path = Path.GetFullPath(Path.Combine(packageDirectory, cellRange.Hyperlink.OriginalString)).Replace("%20" , " ");
                 if (!string.IsNullOrEmpty(packageDirectory) &&
                     !File.Exists(path))
                 {

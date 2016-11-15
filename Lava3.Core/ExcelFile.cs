@@ -470,6 +470,12 @@ namespace Lava3.Core
                     cell.Hyperlink = item.NotesHyperLink;
                     cell.StyleName = stylenameHyperlink;
                     cell.Value = item.Notes.Value;
+                    //check file location
+                    string path = Path.GetFullPath( Path.Combine(Package.File.Directory.FullName,cell.Hyperlink.OriginalString));
+                    if(!File.Exists(path))
+                    {
+                        Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Can not resolve hyperlink.", Common.Colours.ErrorColour);                        
+                    }
                 }
 
                 if (item.IsDuplicateDescription)
@@ -503,7 +509,7 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.TransactionAmount);
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.VatContent);
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.Postage);
-                Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
+                Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
 
             }
             //Create conditional formating
@@ -558,7 +564,7 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
                 Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
                 Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
-                Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink);
+                Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
 
                 //Create conditional formating
                 if (item.Category != null)
@@ -571,7 +577,7 @@ namespace Lava3.Core
                     //Wrap category text
                     _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
                 }
-                if (item.IsMonthlySummary)
+                if (item.IsMonthlySummary && rownum>rowMonthStart)
                 {
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colDebit, rowMonthStart, colDebit, rownum - 1, colDebit, true);
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colCredit, rowMonthStart, colCredit, rownum - 1, colCredit, true);
@@ -603,7 +609,9 @@ namespace Lava3.Core
 
             var caRows = CurrentAccountRows.Where(w => !w.IsDivider &&
                                                        !w.IsMonthlySummary &&
-                                                       !w.IsStartingBalence).ToList();
+                                                       !w.IsStartingBalence &&
+                                                       !w.IsInvoicePaid &&
+                                                       !w.IsDontMap).ToList();
 
             caRows.Sort(delegate (CurrentAccount x, CurrentAccount y)
             {
@@ -667,12 +675,13 @@ namespace Lava3.Core
 
             int summaryColumnsCount = chSummary.Count();
             foreach (CurrentAccount currentAccount in caRows.Where(w => !w.IsDivider &&
-                                                                                    !w.IsMonthlySummary &&
-                                                                                    !w.IsStartingBalence))
+                                                                        !w.IsMonthlySummary &&
+                                                                        !w.IsStartingBalence &&
+                                                                        !w.IsInvoicePaid &&
+                                                                        !w.IsDontMap &&
+                                                                        w.Debit.Value !=0))
             {
-                //Only processing the debits here
-                if (currentAccount.Debit.Value == 0)
-                    continue;
+              
                 rownum++;
 
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, new ColumnDateTime() { ColumnNumber = 1, Value = currentAccount.Date.Value });
@@ -684,20 +693,19 @@ namespace Lava3.Core
                 }
                 else
                 {
-                    foreach (CreditCard creditCard in currentAccount.CreditCardTransactions)
+                    foreach (TransactionSummary ts in currentAccount.CreditCardTransactionSummary)
                     {
-                        if (creditCard.Category == null || string.IsNullOrEmpty(creditCard.Category.Value))
+                        if (ts.Description == null || string.IsNullOrEmpty(ts.Description))
                         {
-                            creditCard.Category = new ColumnString() { Value = UnknonwnCategory };
+                            ts.Description = UnknonwnCategory ;
                         }
 
-                        int colnum = chSummary.Single(w => w.Key.Equals(creditCard.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
-                        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = creditCard.TransactionAmount.Value });
+                        int colnum = chSummary.Single(w => w.Key.Equals(ts.Description, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
+                        Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = ts.Value });
                     }
                 }
 
                 Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, 3, $"ABS(D{rownum})-ABS({currentAccount.Debit.Value})");
-
                 Common.AddSumFormula(_SheetAnnualSummary, rownum, 4, rownum, 5, rownum, summaryColumnsCount);
 
             }
@@ -782,7 +790,7 @@ namespace Lava3.Core
                 if (string.IsNullOrEmpty(invoice.InvoiceName.Value)) continue;
                 rownum++;
                 Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
-                Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink);
+                Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink, Package.File.DirectoryName);
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoiceDate);
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
                 Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);

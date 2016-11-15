@@ -10,6 +10,7 @@ using System.Globalization;
 using OfficeOpenXml.Style;
 using Lava3.Core.Model;
 using System.Reflection;
+using System.IO;
 
 namespace Lava3.Core
 {
@@ -279,7 +280,8 @@ namespace Lava3.Core
                                             int rownum,
                                             ColumnString cell,
                                             Uri hyperLink,
-                                            string stylenameHyperlink)
+                                            string stylenameHyperlink,
+                                            string packageDirectory = null )
         {
             if (hyperLink == null)
             {
@@ -291,6 +293,13 @@ namespace Lava3.Core
                 cellRange.Hyperlink = hyperLink;
                 cellRange.StyleName = stylenameHyperlink;
                 cellRange.Value = cell.Value;
+                //check file location
+                string path = Path.GetFullPath(Path.Combine(packageDirectory, cellRange.Hyperlink.OriginalString));
+                if (!string.IsNullOrEmpty(packageDirectory) &&
+                    !File.Exists(path))
+                {
+                    SetComment(sheet, rownum, cell.ColumnNumber, "Can not resolve hyperlink.", Common.Colours.ErrorColour);
+                }
             }
         }
 
@@ -388,8 +397,7 @@ namespace Lava3.Core
             }
         }
         #endregion
-        internal static void AddFormulaDecimal(ExcelWorksheet sheet, int row, int col, string formula)
-        {
+        internal static void AddFormulaDecimal(ExcelWorksheet sheet, int row, int col, string formula)        {
             var cell = sheet.Cells[row, col];
             cell.Formula = formula;
             cell.Style.Numberformat.Format = "_-* #,##0.00_-;-* #,##0.00_-;_-* \" - \"??_-;_-@_-";

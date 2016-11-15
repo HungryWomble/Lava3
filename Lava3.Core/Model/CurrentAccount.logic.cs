@@ -66,11 +66,11 @@ namespace Lava3.Core.Model
                     IsMonthlySummary = true;
                 }
             }
-
             IsStartingBalence = (rownum == 3);
 
             // set the categories
             Categorise(categories, ccRows);
+            
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace Lava3.Core.Model
 
             if (localCategory != null &&
                     ccRows != null &&
-                    localCategory.AccountingCategory.Value.Equals("CC:HSBC", StringComparison.CurrentCultureIgnoreCase))
+                    localCategory.AccountingCategory.Value.StartsWith("CC:", StringComparison.CurrentCultureIgnoreCase))
             {
                 IsCreditCard = true;
                 IEnumerable<CreditCard> ccTransactions = ccRows.Where(w => w.PaidDate.Value == this.Date.Value);
@@ -134,14 +134,19 @@ namespace Lava3.Core.Model
                         Category.Errors.Add(errorMessage);
                     }
                     StringBuilder sb = new StringBuilder();
-                    bool HasNoCategory=false;
-                    foreach (CreditCard item in ccTransactions)
+                    bool HasNoCategory = false;
+                    CreditCardTransactionSummary = from ccT in ccTransactions
+                                                   group ccT by ccT.Category.Value into g
+                                                   select new TransactionSummary { Description = g.First().Category.Value, Value = g.Sum(s => (decimal)s.TransactionAmount.Value) };
+
+
+                    foreach (var item in CreditCardTransactionSummary)
                     {
-                        if(string.IsNullOrEmpty(item.Category.Value))
+                        if (string.IsNullOrEmpty(item.Description))
                         {
                             HasNoCategory = true;
                         }
-                        sb.AppendLine($" {item.TransactionAmount.Value:N2}, {item.Category.Value}");
+                        sb.AppendLine($" {item.Value:N2}, {item.Description}");
                     }
                     Category.Value = sb.ToString().TrimEnd('\r', '\n');
                     if (HasNoCategory)
@@ -150,6 +155,7 @@ namespace Lava3.Core.Model
                     }
                 }
                 CreditCardTransactions = ccTransactions;
+
             }
             else if (localCategory != null &&
                     !localCategory.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))
@@ -162,7 +168,11 @@ namespace Lava3.Core.Model
                     NotesHyperLink = localCategory.NotesHyperLink;
                 }
             }
-          
+             if (localCategory != null)
+            {
+                IsDontMap = Category.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase);
+                IsInvoicePaid = Category.Value.Equals("invoice paid", StringComparison.CurrentCultureIgnoreCase);
+            }
 
         }
     }

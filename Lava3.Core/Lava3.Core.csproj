@@ -76,6 +76,7 @@
       <DependentUpon>SummaryInvoice.logic.cs</DependentUpon>
     </Compile>
     <Compile Include="Model\SummaryInvoice.logic.cs" />
+    <Compile Include="Model\TransactionSummary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

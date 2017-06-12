@@ -16,6 +16,22 @@ namespace Lava3.Core
 {
     public static class Common
     {
+        public static string GetExcelColumnLetter(int columnNumber)
+        {
+            int dividend = columnNumber;
+            string columnName = String.Empty;
+            int modulo;
+
+            while (dividend > 0)
+            {
+                modulo = (dividend - 1) % 26;
+                columnName = Convert.ToChar(65 + modulo).ToString() + columnName;
+                dividend = (int)((dividend - modulo) / 26);
+            }
+
+            return columnName;
+        }
+
         #region GetColumnHeaders
         public static Dictionary<string, ColumnHeader> GetColumnHeaders(ExcelWorksheet sheet, int headerRowNumber)
         {
@@ -133,15 +149,23 @@ namespace Lava3.Core
         }
         public static decimal? ReplaceNullOrEmptyDecimal(object o)
         {
-            if (o == null || string.IsNullOrWhiteSpace(o.ToString()))
+            decimal retval;
+            if (o == null ||
+                o.ToString().Equals("#REF!") ||
+                string.IsNullOrWhiteSpace(o.ToString())
+                || !Decimal.TryParse(o.ToString(), out retval))
             {
                 return null;
             }
+
             return Convert.ToDecimal(o);
         }
         public static int? ReplaceNullOrEmptyInt(object o)
         {
-            if (o == null || string.IsNullOrWhiteSpace(o.ToString()))
+            int retval;
+            if (o == null ||
+                string.IsNullOrWhiteSpace(o.ToString())
+                || !int.TryParse(o.ToString(), out retval))
             {
                 return null;
             }
@@ -169,7 +193,7 @@ namespace Lava3.Core
         public static class Colours
         {
             public static System.Drawing.Color DuplicateColour { get { return System.Drawing.Color.LightGreen; } }
-           public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
+            public static System.Drawing.Color ErrorColour { get { return System.Drawing.Color.Red; } }
             public static System.Drawing.Color DividerColour { get { return System.Drawing.Color.LightBlue; } }
             public static System.Drawing.Color TotalsColour { get { return System.Drawing.Color.LightBlue; } }
             public static System.Drawing.Color HeaderColour { get { return System.Drawing.Color.LightGray; } }
@@ -231,7 +255,24 @@ namespace Lava3.Core
             }
         }
         #endregion
+        private static string GetNumberFormat(int decimalPlaces)
+        {
+            string numberFormat = "#,##0";
+            if (decimalPlaces > 0)
+            {
+                numberFormat = numberFormat + ".".PadRight(decimalPlaces, '0');
+            }
+            return numberFormat;
+        }
         #region update cell
+        public static void UpdateCellInt(ExcelWorksheet sheet, int rownumber, int columnNumber, int value, bool IsBold = false, int decimalPlaces = 2)
+        {
+            var cell = sheet.Cells[rownumber, columnNumber];
+            cell.Value = (int)value;
+            cell.Style.Numberformat.Format = GetNumberFormat(decimalPlaces);
+            cell.Style.Font.Bold = IsBold;
+
+        }
         public static void UpdateCellInt(ExcelWorksheet sheet, int rownumber, ColumnInt field)
         {
             if (field == null || field?.Value == null && !field.Errors.Any()) return;
@@ -252,6 +293,12 @@ namespace Lava3.Core
             sheet.Cells[rownumber, field.ColumnNumber].Style.Numberformat.Format = DateTimeFormatInfo.CurrentInfo.ShortDatePattern;
 
             WriteErrors(sheet, rownumber, field.ColumnNumber, field.Errors);
+        }
+        public static void UpdateCellString(ExcelWorksheet sheet, int rownumber, int columnNumber, string value, bool IsBold = false)
+        {
+            var cell = sheet.Cells[rownumber, columnNumber];
+            cell.Value = value.TrimEnd('\r', '\n');
+            cell.Style.Font.Bold = IsBold;
         }
         public static void UpdateCellString(ExcelWorksheet sheet, int rownumber, ColumnString field, string isBlankErrorMessage = "", bool IsBold = false)
         {
@@ -281,7 +328,7 @@ namespace Lava3.Core
                                             ColumnString cell,
                                             Uri hyperLink,
                                             string stylenameHyperlink,
-                                            string packageDirectory = null )
+                                            string packageDirectory = null)
         {
             if (hyperLink == null)
             {
@@ -294,7 +341,7 @@ namespace Lava3.Core
                 cellRange.StyleName = stylenameHyperlink;
                 cellRange.Value = cell.Value;
                 //check file location
-                string path = Path.GetFullPath(Path.Combine(packageDirectory, cellRange.Hyperlink.OriginalString)).Replace("%20" , " ");
+                string path = Path.GetFullPath(Path.Combine(packageDirectory, cellRange.Hyperlink.OriginalString)).Replace("%20", " ");
                 if (!string.IsNullOrEmpty(packageDirectory) &&
                     !File.Exists(path))
                 {
@@ -311,6 +358,17 @@ namespace Lava3.Core
             cell.Style.Font.Bold = isBold;
         }
 
+        public static int GetLastColumnNumber(Dictionary<string, ColumnHeader> o)
+        {
+            if (o == null) return 0;
+            int retval = 1;
+            foreach (ColumnHeader ch in o.Values)
+            {
+                if (ch.ColumnNumber > retval)
+                    retval = ch.ColumnNumber;
+            }
+            return retval;
+        }
         public static int GetLastColumnNumber(object o)
         {
             if (o == null) return 0;
@@ -322,7 +380,7 @@ namespace Lava3.Core
 
                 IColumDataType cdt = (IColumDataType)prop.GetValue(o, null);
 
-                if (cdt.ColumnNumber > retval)
+                if (cdt != null && cdt.ColumnNumber > retval)
                 {
                     retval = cdt.ColumnNumber;
                 }
@@ -331,7 +389,7 @@ namespace Lava3.Core
         }
         internal static void SetHeaders(ExcelWorksheet sheet, int rownum, Dictionary<string, ColumnHeader> headers, object o)
         {
-            if(o == null)
+            if (o == null)
                 throw new ArgumentNullException("Parameter o is null.");
 
             int maxCol = 1;
@@ -341,6 +399,9 @@ namespace Lava3.Core
                     continue;
 
                 IColumDataType cdt = (IColumDataType)prop.GetValue(o, null);
+
+                if (cdt == null)
+                    continue;
 
                 SetHeader(sheet, rownum, headers, cdt.ColumnNumber);
                 if (cdt.ColumnNumber > maxCol)
@@ -380,9 +441,9 @@ namespace Lava3.Core
             ExcelAddress SumAddress = new ExcelAddress(firstRowNumber, firstColumnNumber, lastRowNumber - 1, firstColumnNumber);
             sheet.Cells[lastRowNumber, firstColumnNumber].Formula = $"SUM({SumAddress.Address})";
         }
-        
-        internal static void AddSumFormula(ExcelWorksheet sheet, 
-                                            int setRow, int setColumn, 
+
+        internal static void AddSumFormula(ExcelWorksheet sheet,
+                                            int setRow, int setColumn,
                                             int sumFirstRow, int sumFirstColumn, int sumLastRow, int sumLastCol,
                                             bool isCurrency = true)
         {
@@ -390,17 +451,39 @@ namespace Lava3.Core
             cell.Value = 0;
             ExcelAddress SumAddress = new ExcelAddress(sumFirstRow, sumFirstColumn, sumLastRow, sumLastCol);
             cell.Formula = $"SUM({SumAddress.Address})";
-            if(isCurrency)
+            if (isCurrency)
             {
                 cell.Style.Numberformat.Format = "£#,##0.00";
 
             }
         }
         #endregion
-        internal static void AddFormulaDecimal(ExcelWorksheet sheet, int row, int col, string formula)        {
+
+        internal static void AddFormulaDecimal(ExcelWorksheet sheet, int row, int col, string formula)
+        {
             var cell = sheet.Cells[row, col];
             cell.Formula = formula;
             cell.Style.Numberformat.Format = "_-* #,##0.00_-;-* #,##0.00_-;_-* \" - \"??_-;_-@_-";
+
+        }
+        internal static void AddFormula(ExcelWorksheet sheet, int row, int col, string formula)
+        {
+            var cell = sheet.Cells[row, col];
+            cell.Formula = formula;
+        }
+        internal static void AddFormula(ExcelWorksheet sheet, int row, int col, string formula, int decimalPlaces)
+        {
+            var cell = sheet.Cells[row, col];
+            cell.Formula = formula;
+            cell.Style.Numberformat.Format = GetNumberFormat(decimalPlaces);
+
+        }
+
+        internal static void AddFormulaPercentage(ExcelWorksheet sheet, int row, int col, int rowSmall, string colSmall, int rowBig, string colBig)
+        {
+            var cell = sheet.Cells[row, col];
+            cell.Formula = $"={colSmall}{rowSmall}/{colBig}{rowBig}";
+            cell.Style.Numberformat.Format = "###,##%";
 
         }
     }

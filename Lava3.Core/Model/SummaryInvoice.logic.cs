@@ -19,7 +19,7 @@ namespace Lava3.Core.Model
             this.InvoiceDate = new ColumnDateTime(sheet, rownum, ch["Invoice Date"]);
             this.InvoicePaid = new ColumnDateTime(sheet, rownum, ch["Date Funds Recieved"]);
             this.HoursInvoiced = new ColumnInt(sheet, rownum, ch["Hours Invoiced"]);
-            this.DaysInvoiced = new ColumnInt(sheet, rownum, ch["Days Invoiced"]);
+            this.DaysInvoiced = new ColumnDecimal(sheet, rownum, ch["Days Invoiced"]);
             this.InvoiceAmount = new ColumnDecimal(sheet, rownum, ch["Invoice Amount"]);
             this.TotalPaid = new ColumnDecimal(sheet, rownum, ch["Total Paid"]);
 

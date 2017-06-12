@@ -9,5 +9,9 @@ namespace Lava3.Core
         {
             return $"[{ColumnNumber}] {Header}";
         }
+        public string GetColumnLetter()
+        {
+            return Common.GetExcelColumnLetter(this.ColumnNumber);
+        }
     }
 }

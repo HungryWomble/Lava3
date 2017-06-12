@@ -15,7 +15,7 @@ namespace Lava3.Core.Model
         public ColumnDateTime InvoiceDate { get; set; }
         public ColumnDateTime InvoicePaid { get; set; }
         public ColumnInt HoursInvoiced { get; set; }
-        public ColumnInt DaysInvoiced { get; set; }
+        public ColumnDecimal DaysInvoiced { get; set; }
         public ColumnDecimal TotalPaid { get; set; }
         public ColumnDecimal InvoiceAmount { get; set; }
 

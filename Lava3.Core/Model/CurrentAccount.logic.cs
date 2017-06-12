@@ -42,6 +42,13 @@ namespace Lava3.Core.Model
         {
             RowNumber = rownum;
             Date = new ColumnDateTime(sheet, rownum, ch["Date"]);
+            //if (Date.Value == null)
+            //{
+            //    Date = null;
+            //    rownum = -1;                
+            //    return ;
+            //}
+
             Description = new ColumnString(sheet, rownum, ch["Description"]);
             Debit = new ColumnDecimal(sheet, rownum, ch["Debit"]);
             if(Debit.Value!=null)
@@ -67,9 +74,10 @@ namespace Lava3.Core.Model
                 }
             }
             IsStartingBalence = (rownum == 3);
-
             // set the categories
             Categorise(categories, ccRows);
+            //Set the train flag
+            IsTrainTravel= (Notes.Value.Equals("IsTrainTravel", StringComparison.CurrentCultureIgnoreCase)) ;
             
         }
 

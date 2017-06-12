@@ -112,6 +112,11 @@ namespace Lava3.Core
         /// <param name="path"></param>
         public void OpenPackage(string path)
         {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException(path);
+            }
+
             if (Package == null)
             {
                 KillAllExcel();
@@ -141,20 +146,18 @@ namespace Lava3.Core
 
                 rownum++;
                 if (string.IsNullOrEmpty(row.Description.Value)) continue;
-                Rows.Add(row);
-            }
-            //Remove boundries and monthly totals
-            for (int i = Rows.Count - 1; i >= 0; i--)
-            {
-                if (Rows[i].IsDivider || Rows[i].IsMonthlySummary)
+                if (!row.IsDivider && !row.IsMonthlySummary)
                 {
-                    Rows.RemoveAt(i);
+                    Rows.Add(row);
                 }
             }
-
-
+            DateTime? endOfPreviousYear = Convert.ToDateTime(Rows.Where(f => !f.IsStartingBalence).OrderBy(o => o.Date.Value).First().Date.Value).LastDayOfPreviousMonth();
+            Rows.Single(s => s.IsStartingBalence).Date.Value = endOfPreviousYear;
             // sort by transaction date
-            Rows = Rows.OrderBy(o => o.Date.Value).ThenBy(t => t.Description.Value).ToList();
+            Rows = Rows
+                    .OrderBy(o => o.Date.Value)
+                    .ThenBy(t => t.Description.Value)
+                    .ToList();
             // Add dummy row to the end of rows so we get month end.
 
             // Set the monthly and annual running totals.
@@ -178,7 +181,7 @@ namespace Lava3.Core
                     AddCurrentAccountMonthDivider(retval, ref NewRowNumber, ref MonthlyDebit, ref MonthlyCredit, columnHeaders, MonthlyTotal);
                 }
                 current.RowNumber = NewRowNumber;
-                decimal? transactionBalence = current.Credit.Value + current.Debit.Value;
+                decimal? transactionBalence = Sum(current.Credit, current.Debit);
                 MonthlyTotal += transactionBalence;
 
 
@@ -202,6 +205,18 @@ namespace Lava3.Core
             CurrentAccountRows = retval;
         }
 
+        /// <summary>
+        /// Sum up credit and debit
+        /// </summary>
+        /// <param name="value1"></param>
+        /// <param name="value2"></param>
+        /// <returns></returns>
+        private decimal? Sum(ColumnDecimal value1, ColumnDecimal value2)
+        {
+            if (value1.Value == null) value1.Value = 0;
+            if (value2.Value == null) value2.Value = 0;
+            return value1.Value + value2.Value;
+        }
         private static void AddCurrentAccountMonthDivider(List<CurrentAccount> retval,
                                                         ref int NewRowNumber,
                                                         ref decimal? MonthlyDebit,
@@ -528,7 +543,7 @@ namespace Lava3.Core
                 CreditCardRows == null ||
                 CurrentAccountRows == null) return;
 
-            Common.DeleteRows(_SheetCurrentAccount, 3);
+            Common.DeleteRows(_SheetCurrentAccount, 4);
             //Create styles
             string stylenameHyperlink = "HyperLink";
             CreateStyleHyperLink(_SheetCurrentAccount, stylenameHyperlink);
@@ -556,26 +571,29 @@ namespace Lava3.Core
                     CategoryMissing = null;
                     item.Category = null;
                 }
-                Common.UpdateCellDate(_SheetCurrentAccount, rownum, item.Date);
-                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Description);
-                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
-                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
-                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
-                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
-                Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
-                Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
-                Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
-
-                //Create conditional formating
-                if (item.Category != null)
+                else
                 {
-                    int categoryColumn = item.Category.ColumnNumber;
-                    ExcelAddress categoryAddress = new ExcelAddress(rownum,
-                                                                    categoryColumn,
-                                                                    rownum,
-                                                                    categoryColumn);
-                    //Wrap category text
-                    _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+                    Common.UpdateCellDate(_SheetCurrentAccount, rownum, item.Date);
+                    Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Description);
+                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
+                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
+                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
+                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
+                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
+                    Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
+                    Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
+
+                    //Create conditional formating
+                    if (item.Category != null)
+                    {
+                        int categoryColumn = item.Category.ColumnNumber;
+                        ExcelAddress categoryAddress = new ExcelAddress(rownum,
+                                                                        categoryColumn,
+                                                                        rownum,
+                                                                        categoryColumn);
+                        //Wrap category text
+                        _SheetCurrentAccount.Cells[categoryAddress.Address].Style.WrapText = true;
+                    }
                 }
                 if (item.IsMonthlySummary && rownum > rowMonthStart)
                 {
@@ -594,13 +612,17 @@ namespace Lava3.Core
         {
 
             string stylenameHyperlink = "HyperLink";
-            SummaryExpense FirstExpense = Expenses.First();
+            SummaryExpense FirstExpense = null;
+            if (Expenses.Any())
+            {
+                FirstExpense = Expenses.First();
+            }
             SummaryInvoice FirstInvoice = Invoices.First();
-            int LastExpenseColumnNumber = Common.GetLastColumnNumber(FirstExpense);
-            int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
             Dictionary<string, ColumnHeader> chExpences = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Expenses, 2);
             Dictionary<string, ColumnHeader> chInvoices = Common.GetColumnHeaders(_SheetAnnualSummary, 1, eDescriptionKeys.AnnualSummary.Invoices);
             Dictionary<string, ColumnHeader> chSummary = new Dictionary<string, ColumnHeader>();
+            int LastExpenseColumnNumber = Common.GetLastColumnNumber(chExpences);
+            int LastInvoiceColumnNumber = Common.GetLastColumnNumber(FirstInvoice);
 
             int rownum = 4;
             Common.DeleteRows(_SheetAnnualSummary, 4);
@@ -691,7 +713,7 @@ namespace Lava3.Core
                     int colnum = chSummary.Single(w => w.Key.Equals(currentAccount.Category.Value, StringComparison.CurrentCultureIgnoreCase)).Value.ColumnNumber;
                     Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, new ColumnDecimal() { ColumnNumber = colnum, Value = currentAccount.Debit.Value });
                 }
-                else
+                else if (currentAccount.CreditCardTransactionSummary != null)
                 {
                     foreach (TransactionSummary ts in currentAccount.CreditCardTransactionSummary)
                     {
@@ -731,7 +753,7 @@ namespace Lava3.Core
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
                                     new ColumnString()
                                     {
-                                        ColumnNumber = Expenses.First().VAT.ColumnNumber,
+                                        ColumnNumber = chExpences["V.A.T."].ColumnNumber,
                                         Value = "If applicable"
                                     },
                                     "",
@@ -765,7 +787,7 @@ namespace Lava3.Core
             rownum += 2;
 
             //Expenses Total row
-            _SheetAnnualSummary.Cells[rownum, FirstExpense.Description.ColumnNumber].Value = eDescriptionKeys.Totals;
+            _SheetAnnualSummary.Cells[rownum, chExpences["Description"].ColumnNumber].Value = eDescriptionKeys.Totals;
             for (int i = 3; i <= chExpences.Count(); i++)
             {
                 Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
@@ -786,15 +808,15 @@ namespace Lava3.Core
                                     "",
                                     true);
             rownum++;
-            //Set the expense header
-            Common.SetHeaders(_SheetAnnualSummary, rownum, chInvoices, FirstInvoice);
+            //Set the Invoice header
+            Common.SetHeaders(_SheetAnnualSummary, rownum, chInvoices);
 
 
             //set the expense data
             int FirstInvoiceRow = rownum + 1;
             foreach (SummaryInvoice invoice in Invoices)
             {
-                if (string.IsNullOrEmpty(invoice.InvoiceName.Value)) continue;
+                if (string.IsNullOrEmpty(invoice.Customer.Value)) continue;
                 rownum++;
                 Common.UpdateCellString(_SheetAnnualSummary, rownum, invoice.Customer);
                 Common.UpdateHyperLink(_SheetAnnualSummary, rownum, invoice.InvoiceName, invoice.InvoiceNameHyperLink, stylenameHyperlink, Package.File.DirectoryName);
@@ -802,21 +824,88 @@ namespace Lava3.Core
                 Common.UpdateCellDate(_SheetAnnualSummary, rownum, invoice.InvoicePaid);
                 Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysToPay);
                 Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.HoursInvoiced);
-                Common.UpdateCellInt(_SheetAnnualSummary, rownum, invoice.DaysInvoiced);
+                Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.DaysInvoiced);
                 Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.InvoiceAmount);
                 Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.TotalPaid);
                 Common.UpdateCellDecimal(_SheetAnnualSummary, rownum, invoice.DayRate);
             }
             rownum += 2;
-            //Invoice Total Row
-            _SheetAnnualSummary.Cells[rownum, FirstInvoice.Customer.ColumnNumber].Value = eDescriptionKeys.Totals;
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.HoursInvoiced.ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.DaysInvoiced.ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.InvoiceAmount.ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, FirstInvoice.TotalPaid.ColumnNumber);
+            ////Invoice Total Row
+            _SheetAnnualSummary.Cells[rownum, chInvoices["Customer"].ColumnNumber].Value = eDescriptionKeys.Totals;
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices[SalesInvoicesColumnheaderText.HoursInvoiced].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Days Invoiced"].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Invoice Amount"].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Total Paid"].ColumnNumber);
             Common.SetRowColour(_SheetAnnualSummary, rownum, LastInvoiceColumnNumber, Common.Colours.TotalsColour, true);
             #endregion
 
+            #region Add Travel Subsitance Summary
+            int colText = chInvoices[SalesInvoicesColumnheaderText.HoursInvoiced].ColumnNumber;
+            int colValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].ColumnNumber;
+            string colLetterValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].GetColumnLetter();
+            int availableDays = 252;
+            int subsistanceDays = caRows.Where(w => w.Category.Value.Equals("Subsistence")).GroupBy(g => g.Date).ToArray().Count();
+
+            rownum += 2;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Invoiced days");
+            Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2}");
+            int invoicedDaysRow = rownum;
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Available days");
+            Common.UpdateCellInt(_SheetAnnualSummary, rownum, colValue, availableDays, false, 0);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage worked");
+            Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
+                                                    , rownum - 2, colLetterValue
+                                                    , rownum - 1, colLetterValue);
+            rownum += 2;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Driven");
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, "='Car Mileage'!K4",0);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Driven");
+            Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
+                                                    , rownum - 1, colLetterValue
+                                                    , invoicedDaysRow, colLetterValue);
+
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Train");
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 2},0)",0);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Train");
+            Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
+                                                    , rownum - 1, colLetterValue
+                                                    , invoicedDaysRow, colLetterValue);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Traveled");
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2} + {colLetterValue}{rownum - 4}",0);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Traveled");
+            Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
+                                                    , rownum - 1, colLetterValue
+                                                    , invoicedDaysRow, colLetterValue);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Subsistance card");
+            Common.UpdateCellInt(_SheetAnnualSummary, rownum, colValue, subsistanceDays, false, 0);
+            rownum++;
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Subsistance (cash)");
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 1},0)",0);
+
+            #endregion
+
+
+        }
+
+        public static class SalesInvoicesColumnheaderText
+        {
+            public static string Customer { get { return "Customer"; } }
+            public static string Invoice { get { return "Invoice"; } }
+            public static string InvoiceDate { get { return "Invoice Date"; } }
+            public static string DateFundsRecieved { get { return "Date Funds Recieved"; } }
+            public static string DaysToPay { get { return "Days to pay"; } }
+            public static string HoursInvoiced { get { return "Hours Invoiced"; } }
+            public static string DaysInvoiced { get { return "Days Invoiced"; } }
+            public static string TotalPaid { get { return "Total Paid"; } }
+            public static string DayRate { get { return "Day Rate"; } }
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Lava3.Core.Model
             {
                 int colnum = header.Value.ColumnNumber;
                 if (colnum <= VAT.ColumnNumber &&
-                    colnum != ch["Total Owed To Director"].ColumnNumber)
+                    colnum != ch["Repayment"].ColumnNumber)
                     continue;
                 ExcelRange cell = sheet.Cells[rownum, colnum];
 

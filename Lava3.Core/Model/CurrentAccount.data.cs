@@ -23,7 +23,7 @@ namespace Lava3.Core.Model
         public bool IsCreditCard { get; set; }
         public bool IsInvoicePaid { get; set; }
         public bool IsDontMap { get; set; }
-
+        public bool IsTrainTravel { get; set; }
         public IEnumerable<CreditCard> CreditCardTransactions { get; set; }
         public IEnumerable<TransactionSummary> CreditCardTransactionSummary { get; set; }
     }

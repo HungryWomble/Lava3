@@ -18,13 +18,16 @@ namespace Lava3
         {
             InitializeComponent();
             txtPath.Text = Properties.Settings.Default.MostRecentFile1;
+            if(string.IsNullOrEmpty(txtPath.Text))
+            {
+                txtPath.Text=System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+            }
         }
 
 
         private void btnBrowse_Click(object sender, EventArgs e)
         {
-            string path = System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
-            txtPath.Text = BrowseForFile(path);
+            txtPath.Text = BrowseForFile(txtPath.Text);
             WriteFileNameToSettings();
         }
 

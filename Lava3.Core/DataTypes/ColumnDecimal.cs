@@ -3,7 +3,7 @@ using OfficeOpenXml;
 
 namespace Lava3.Core.DataTypes
 {
-    public class ColumnDecimal : IColumDataType
+    public class ColumnDecimal : BaseColumn, IColumDataType
     {
         public ColumnDecimal()
         {
@@ -18,7 +18,6 @@ namespace Lava3.Core.DataTypes
         }
 
         public decimal? Value { get; set; }
-        public int ColumnNumber { get; set; }
 
         public override string ToString()
         {
@@ -27,6 +26,16 @@ namespace Lava3.Core.DataTypes
             else
                 return base.ToString();
         }
+       
+    }
+    public abstract class BaseColumn
+    {
         public List<string> Errors { get; set; }
+        public string ColumnLetter { get { return Common.GetExcelColumnLetter(this.ColumnNumber); } }
+        public int ColumnNumber { get; set; }
+        public string ColumnCode(int rownum)
+        {
+            return $"{ColumnLetter}{rownum}";
+        }
     }
 }

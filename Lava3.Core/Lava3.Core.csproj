@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="ColumnHeader.cs" />
     <Compile Include="Common.cs" />
+    <Compile Include="CustomExceptions.cs" />
     <Compile Include="DataTypes\ColumnDateTime.cs" />
     <Compile Include="DataTypes\ColumnDecimal.cs" />
     <Compile Include="DataTypes\ColumnInt.cs" />

@@ -17,22 +17,42 @@ namespace Lava3
         public Form1()
         {
             InitializeComponent();
-            txtPath.Text = Properties.Settings.Default.MostRecentFile1;
-            if(string.IsNullOrEmpty(txtPath.Text))
+            txtRoot.Text = Properties.Settings.Default.RootFolder;
+            
+            if (string.IsNullOrEmpty(txtRoot.Text) || !Directory.Exists(txtRoot.Text))
             {
-                txtPath.Text=System.Environment.GetFolderPath(System.Environment.SpecialFolder.MyDocuments);
+                txtRoot.Text = Common.GetDropBoxFolder();            
+            }
+            if (Properties.Settings.Default.MostRecentFiles != null)
+            {
+                foreach (var item in Properties.Settings.Default.MostRecentFiles)
+                {
+                    cboFiles.Items.Add(item);
+                }
             }
         }
-
-
+        /// <summary>
+        /// Get the file name
+        /// </summary>
+        /// <returns></returns>
+        private string GetFileName()
+        {
+            string retval = null; ;
+            if(Common.FileExists(txtRoot.Text, cboFiles.SelectedItem.ToString()))
+            {
+                retval = Path.Combine(txtRoot.Text, cboFiles.SelectedItem.ToString());
+            }
+            return retval;
+        }
         private void btnBrowse_Click(object sender, EventArgs e)
         {
-            txtPath.Text = BrowseForFile(txtPath.Text);
+            BrowseForFile();
             WriteFileNameToSettings();
         }
 
-        private string BrowseForFile(string path)
+        private void BrowseForFile()
         {
+            string path = System.IO.Path.Combine(txtRoot.Text, cboFiles.Text);
             openFileDialog1.Title = "Please choose accounts file";
             openFileDialog1.InitialDirectory = path;
             openFileDialog1.Filter = @"Excel (2007-)|*.xlsx";
@@ -41,17 +61,21 @@ namespace Lava3
             if (openFileDialog1.ShowDialog() == DialogResult.OK &&
                 File.Exists(openFileDialog1.FileName))
             {
-                return openFileDialog1.FileName;
+                string retval = openFileDialog1.FileName.Replace(txtRoot.Text+"\\", "");
+                cboFiles.Items.Add(retval);
+                cboFiles.SelectedItem = retval;
             }
-            else
-            {
-                return path;
-            }
+            
         }
 
         public void WriteFileNameToSettings()
         {
-            Properties.Settings.Default.MostRecentFile1 = txtPath.Text;
+            Properties.Settings.Default.RootFolder = txtRoot.Text;
+            Properties.Settings.Default.MostRecentFiles = new System.Collections.Specialized.StringCollection();
+            foreach (var item in cboFiles.Items)
+            {
+                Properties.Settings.Default.MostRecentFiles.Add(item.ToString());
+            }
             Properties.Settings.Default.Save();
         }
 
@@ -60,7 +84,7 @@ namespace Lava3
             this.Enabled = false;
             var excelFile = new ExcelFile();
 
-            excelFile.ShowFile(txtPath.Text);
+            excelFile.ShowFile(GetFileName());
             this.Enabled = true;
         }
 
@@ -68,7 +92,7 @@ namespace Lava3
         {
             this.Enabled = false;
             var excelFile = new ExcelFile();
-            excelFile.OpenPackage(txtPath.Text);
+            excelFile.OpenPackage(GetFileName());
 
             excelFile.LoadAndUpdateCategory();
             excelFile.SaveAndClose();
@@ -79,7 +103,7 @@ namespace Lava3
         {
             this.Enabled = false;
             var excelFile = new ExcelFile();
-            excelFile.OpenPackage(txtPath.Text);
+            excelFile.OpenPackage(GetFileName());
 
             excelFile.LoadAndUpdateCreditCard();
 
@@ -92,7 +116,7 @@ namespace Lava3
         {
             this.Enabled = false;
             var excelFile = new ExcelFile();
-            excelFile.OpenPackage(txtPath.Text);
+            excelFile.OpenPackage(GetFileName());
 
             excelFile.LoadAndUpdateCurrentAccount();
 
@@ -103,12 +127,31 @@ namespace Lava3
         private void btnSummary_Click(object sender, EventArgs e)
         {
             this.Enabled = false;
-            using (var excelFile = new ExcelFile(txtPath.Text))
+            using (var excelFile = new ExcelFile(GetFileName()))
             {
                 excelFile.LoadAndUpdateAnnualSummary();
                 excelFile.SaveAndClose();
             }
             this.Enabled = true;
+        }
+
+        private void btnRoot_Click(object sender, EventArgs e)
+        {
+            // Show the FolderBrowserDialog.
+            if(Directory.Exists(txtRoot.Text))
+            {
+                folderBrowserDialog1.SelectedPath = txtRoot.Text;
+            }
+            DialogResult result = folderBrowserDialog1.ShowDialog();
+            if (result == DialogResult.OK)
+            {
+                txtRoot.Text = folderBrowserDialog1.SelectedPath;              
+            }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 

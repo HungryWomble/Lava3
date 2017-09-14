@@ -16,6 +16,53 @@ namespace Lava3.Core
 {
     public static class Common
     {
+
+
+        #region FileHandling
+        /// <summary>
+        /// Get the root of the dropbox folder location
+        /// </summary>
+        /// <returns></returns>
+        public static string GetDropBoxFolder()
+        {
+            var infoPath = @"Dropbox\info.json";
+
+            var jsonPath = Path.Combine(Environment.GetEnvironmentVariable("LocalAppData"), infoPath);
+
+            if (!File.Exists(jsonPath)) jsonPath = Path.Combine(Environment.GetEnvironmentVariable("AppData"), infoPath);
+
+            if (!File.Exists(jsonPath)) throw new Exception("Dropbox could not be found!");
+
+            var dropboxPath = File.ReadAllText(jsonPath).Split('\"')[5].Replace(@"\\", @"\");
+            return dropboxPath;
+        }
+
+        /// <summary>
+        /// Does the file exist
+        /// </summary>
+        /// <param name="root"></param>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool FileExists(string root, string path)
+        {
+            bool retval = false;
+            if (string.IsNullOrEmpty(root))
+                throw new ParameterException("root is null or empty");
+
+            if (string.IsNullOrEmpty(path))
+                throw new ParameterException("path is null or empty");
+
+            string fullPath = Path.Combine(root, path);
+
+            retval = File.Exists(fullPath);
+            if(retval)
+            {
+                FullFilePath = fullPath;
+            }
+            return retval;
+        }
+        public static string FullFilePath { get; private set; }
+        #endregion
         public static string GetExcelColumnLetter(int columnNumber)
         {
             int dividend = columnNumber;

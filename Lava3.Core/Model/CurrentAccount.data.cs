@@ -26,5 +26,6 @@ namespace Lava3.Core.Model
         public bool IsTrainTravel { get; set; }
         public IEnumerable<CreditCard> CreditCardTransactions { get; set; }
         public IEnumerable<TransactionSummary> CreditCardTransactionSummary { get; set; }
+       
     }
 }

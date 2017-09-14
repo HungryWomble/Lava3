@@ -12,7 +12,7 @@ namespace Lava3.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "14.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "15.1.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -25,13 +25,24 @@ namespace Lava3.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string MostRecentFile1 {
+        public global::System.Collections.Specialized.StringCollection MostRecentFiles {
             get {
-                return ((string)(this["MostRecentFile1"]));
+                return ((global::System.Collections.Specialized.StringCollection)(this["MostRecentFiles"]));
             }
             set {
-                this["MostRecentFile1"] = value;
+                this["MostRecentFiles"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string RootFolder {
+            get {
+                return ((string)(this["RootFolder"]));
+            }
+            set {
+                this["RootFolder"] = value;
             }
         }
     }

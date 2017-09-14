@@ -555,7 +555,8 @@ namespace Lava3.Core
             int colCredit = CurrentAccountRows.First(f => !f.IsMonthlySummary && !f.IsDivider).Credit.ColumnNumber;
             int lastColumnNumber = CurrentAccountRows.First().Notes.ColumnNumber;
             int CategoryColumnNumber = CurrentAccountRows.First().Category.ColumnNumber;
-            foreach (var item in CurrentAccountRows)
+            int yearlyBalenceOffset = -3;
+            foreach (CurrentAccount item in CurrentAccountRows)
             {
                 rownum++;
                 string CategoryMissing = "Category missing";
@@ -578,8 +579,12 @@ namespace Lava3.Core
                     Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Debit);
                     Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
                     Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
-                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
-                    Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
+                    //Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
+                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence.ColumnNumber,
+                        $"={item.MonthlyBalence.ColumnCode(rownum - 1)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
+                    //Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
+                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence.ColumnNumber,
+                        $"={item.YearlyBalence.ColumnCode(rownum - 1 + yearlyBalenceOffset)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
                     Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
                     Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
 
@@ -600,11 +605,15 @@ namespace Lava3.Core
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colDebit, rowMonthStart, colDebit, rownum - 1, colDebit, true);
                     Common.AddSumFormula(_SheetCurrentAccount, rownum, colCredit, rowMonthStart, colCredit, rownum - 1, colCredit, true);
                     rowMonthStart = rownum + 1;
+
                 }
                 else if (item.IsDivider)
                 {
                     rowMonthStart = rownum + 1;
+                    yearlyBalenceOffset = -2;
                 }
+                else
+                { yearlyBalenceOffset = 0; }
             }
         }
 
@@ -860,7 +869,7 @@ namespace Lava3.Core
                                                     , rownum - 1, colLetterValue);
             rownum += 2;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Driven");
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, "='Car Mileage'!K4",0);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, "='Car Mileage'!K4", 0);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Driven");
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
@@ -869,7 +878,7 @@ namespace Lava3.Core
 
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Train");
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 2},0)",0);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 2},0)", 0);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Train");
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
@@ -877,7 +886,7 @@ namespace Lava3.Core
                                                     , invoicedDaysRow, colLetterValue);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Traveled");
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2} + {colLetterValue}{rownum - 4}",0);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2} + {colLetterValue}{rownum - 4}", 0);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Traveled");
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
@@ -888,7 +897,7 @@ namespace Lava3.Core
             Common.UpdateCellInt(_SheetAnnualSummary, rownum, colValue, subsistanceDays, false, 0);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Subsistance (cash)");
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 1},0)",0);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 1},0)", 0);
 
             #endregion
 

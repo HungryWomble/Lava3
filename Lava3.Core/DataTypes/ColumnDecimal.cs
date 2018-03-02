@@ -33,6 +33,11 @@ namespace Lava3.Core.DataTypes
         public List<string> Errors { get; set; }
         public string ColumnLetter { get { return Common.GetExcelColumnLetter(this.ColumnNumber); } }
         public int ColumnNumber { get; set; }
+        /// <summary>
+        /// The column code e.g. A1 or D4
+        /// </summary>
+        /// <param name="rownum"></param>
+        /// <returns></returns>
         public string ColumnCode(int rownum)
         {
             return $"{ColumnLetter}{rownum}";

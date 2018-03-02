@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using Lava3.Core;
-
-namespace Lava3
+﻿namespace Lava3
 {
+    using System;
+    using System.IO;
+    using System.Windows.Forms;
+    using Lava3.Core;
+
     public partial class Form1 : Form
     {
         public Form1()
@@ -23,21 +16,28 @@ namespace Lava3
             {
                 txtRoot.Text = Common.GetDropBoxFolder();            
             }
+
             if (Properties.Settings.Default.MostRecentFiles != null)
             {
                 foreach (var item in Properties.Settings.Default.MostRecentFiles)
                 {
-                    cboFiles.Items.Add(item);
+                    var fullPath = Path.Combine(txtRoot.Text, item);
+                    if (File.Exists(fullPath))
+                    {
+                        cboFiles.Items.Add(item);
+                    }
                 }
             }
         }
+
+    
         /// <summary>
         /// Get the file name
         /// </summary>
         /// <returns></returns>
         private string GetFileName()
         {
-            string retval = null; ;
+            string retval = null; 
             if(Common.FileExists(txtRoot.Text, cboFiles.SelectedItem.ToString()))
             {
                 retval = Path.Combine(txtRoot.Text, cboFiles.SelectedItem.ToString());

@@ -156,7 +156,7 @@ namespace Lava3.Core
             // sort by transaction date
             Rows = Rows
                     .OrderBy(o => o.Date.Value)
-                    .ThenBy(t => t.Description.Value)
+                    .ThenBy(t => t.RowNumber)
                     .ToList();
             // Add dummy row to the end of rows so we get month end.
 

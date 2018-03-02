@@ -88,10 +88,6 @@
       <Project>{05b5ddaf-ba66-470d-acd3-2c2e73b62961}</Project>
       <Name>Lava3.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Lava3.TestFiles\Lava3.TestFiles.csproj">
-      <Project>{cb749b98-edad-4958-a6f7-bb587e169fab}</Project>
-      <Name>Lava3.TestFiles</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

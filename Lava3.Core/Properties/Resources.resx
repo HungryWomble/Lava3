@@ -130,7 +130,7 @@
     <value>Balance At start of year</value>
   </data>
   <data name="DescriptionKey_Expenses" xml:space="preserve">
-    <value>PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH"</value>
+    <value>PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH</value>
   </data>
   <data name="DescriptionKey_SalesInvoices" xml:space="preserve">
     <value>SALES INVOICES</value>

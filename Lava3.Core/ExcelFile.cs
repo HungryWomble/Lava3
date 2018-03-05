@@ -32,13 +32,13 @@ namespace Lava3.Core
         }
         public struct eDescriptionKeys
         {
-            public const string StartingBalance = "Balance At start of year";
-            public const string Totals = "Totals";
+            public static string StartingBalance = Resources.DescriptionKey_BalanceAtStartOfYear;
+            public static string Totals = Resources.DescriptionKey_Totals;
             public struct AnnualSummary
             {
-                public const string Invoices = "SALES INVOICES";
-                public const string Expenses = "PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH";
-                public const string Summary = "BANK ACCOUNT PAYMENTS";
+                public static string Invoices = Resources.DescriptionKey_SalesInvoices;
+                public static string Expenses = Resources.DescriptionKey_Expenses;
+                public static string Summary = Resources.DescriptionKey_Summary;
             }
 
         }

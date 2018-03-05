@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Lava3.Core.Model;
 using OfficeOpenXml;
-using System.Xml.Linq;
 using Lava3.Core.DataTypes;
 using System.Drawing;
 using OfficeOpenXml.Style.XmlAccess;
-using System.Reflection;
+using Lava3.Core.Properties;
 
 namespace Lava3.Core
 {
@@ -27,11 +24,11 @@ namespace Lava3.Core
         }
         public static class eWorkSheetLabels
         {
-            public const string CreditCard = "CreditCard";
-            public const string CategoryLookup = "Category LookUp";
-            public const string CurrentAccount = "HSBC";
-            public const string AnnualSummary = "Annual Summary";
-            public const string CarMilage = "Car Mileage";
+            public static string CreditCard = Resources.WorkSheelLabel_CreditCard;
+            public static string CategoryLookup = Resources.WorkSheetLabel_CategoryLookup;
+            public static string CurrentAccount = Resources.WorksheetLabel_CurrentAccount;
+            public static string AnnualSummary = Resources.WorkSheetLabel_AnnualSummary;
+            public static string CarMilage = Resources.WorkSheetLabel_CarMilage;
         }
         public struct eDescriptionKeys
         {

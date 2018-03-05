@@ -4,6 +4,8 @@
     using System.IO;
     using System.Windows.Forms;
     using Lava3.Core;
+    using System.Xml;
+    using System.Xml.Linq;
 
     public partial class Form1 : Form
     {
@@ -16,13 +18,13 @@
             {
                 txtRoot.Text = Common.GetDropBoxFolder();            
             }
-
+            
             if (Properties.Settings.Default.MostRecentFiles != null)
             {
                 foreach (var item in Properties.Settings.Default.MostRecentFiles)
                 {
                     var fullPath = Path.Combine(txtRoot.Text, item);
-                    if (File.Exists(fullPath))
+                    if (File.Exists(fullPath) && !cboFiles.Items.Contains(item))
                     {
                         cboFiles.Items.Add(item);
                     }

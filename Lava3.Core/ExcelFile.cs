@@ -182,17 +182,17 @@ namespace Lava3.Core
                 MonthlyTotal += transactionBalence;
 
 
-                current.YearlyBalence.Value = previous.YearlyBalence.Value
+                current.CalculatedYearlyBalence.Value = previous.CalculatedYearlyBalence.Value
                                                             + transactionBalence;
-                current.MonthlyBalence.Value = MonthlyTotal;
+                current.CalculatedMonthlyBalence.Value = MonthlyTotal;
 
                 MonthlyCredit = MonthlyCredit + current.Credit.Value;
                 MonthlyDebit = MonthlyDebit + current.Debit.Value;
                 //Validation
-                if (current.YearlyBalence.Value != current.Balence.Value)
+                if (current.CalculatedYearlyBalence.Value != current.Balence.Value)
                 {
-                    string msg = $"{Resources.Validation_BalancesNotMatch} {current.Balence} != {current.YearlyBalence}";
-                    current.YearlyBalence.Errors.Add(msg);
+                    string msg = $"{Resources.Validation_BalancesNotMatch} {current.Balence} != {current.CalculatedYearlyBalence}";
+                    current.CalculatedYearlyBalence.Errors.Add(msg);
                     current.Balence.Errors.Add(msg);
                 }
                 retval.Add(Rows[i]);
@@ -576,11 +576,11 @@ namespace Lava3.Core
                     Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Credit);
                     Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.Balence);
                     //Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence);
-                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.MonthlyBalence.ColumnNumber,
-                        $"={item.MonthlyBalence.ColumnCode(rownum - 1)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
+                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.CalculatedMonthlyBalence.ColumnNumber,
+                        $"={item.CalculatedMonthlyBalence.ColumnCode(rownum - 1)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
                     //Common.UpdateCellDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence);
-                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.YearlyBalence.ColumnNumber,
-                        $"={item.YearlyBalence.ColumnCode(rownum - 1 + yearlyBalenceOffset)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
+                    Common.AddFormulaDecimal(_SheetCurrentAccount, rownum, item.CalculatedYearlyBalence.ColumnNumber,
+                        $"={item.CalculatedYearlyBalence.ColumnCode(rownum - 1 + yearlyBalenceOffset)}+Sum({item.Debit.ColumnCode(rownum)}:{item.Credit.ColumnCode(rownum)})");
                     Common.UpdateCellString(_SheetCurrentAccount, rownum, item.Category, CategoryMissing);
                     Common.UpdateHyperLink(_SheetCurrentAccount, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
 

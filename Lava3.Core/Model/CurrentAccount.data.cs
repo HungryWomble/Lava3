@@ -12,8 +12,8 @@ namespace Lava3.Core.Model
         public ColumnDecimal Debit { get; set; }
         public ColumnDecimal Credit { get; set; }
         public ColumnDecimal Balence { get; set; }
-        public ColumnDecimal MonthlyBalence { get; set; }
-        public ColumnDecimal YearlyBalence { get; set; }
+        public ColumnDecimal CalculatedMonthlyBalence { get; set; }
+        public ColumnDecimal CalculatedYearlyBalence { get; set; }
         public ColumnString Category { get; set; }
         public ColumnString Notes { get; set; }
         public Uri NotesHyperLink { get; set; }

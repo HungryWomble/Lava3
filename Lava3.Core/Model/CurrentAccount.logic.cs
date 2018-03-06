@@ -57,8 +57,8 @@ namespace Lava3.Core.Model
             }
             Credit = new ColumnDecimal(sheet, rownum, ch["Credit"]);
             Balence = new ColumnDecimal(sheet, rownum, ch["Balence"]);
-            MonthlyBalence = new ColumnDecimal(sheet, rownum, ch["Monthly"]);
-            YearlyBalence = new ColumnDecimal(sheet, rownum, ch["Yearly"]);
+            CalculatedMonthlyBalence = new ColumnDecimal(sheet, rownum, ch["Monthly"]);
+            CalculatedYearlyBalence = new ColumnDecimal(sheet, rownum, ch["Yearly"]);
             Category = new ColumnString(sheet, rownum, ch["Category Override"]);
             Notes = new ColumnString(sheet, rownum, ch["Notes"]);
             if (sheet.Cells[rownum, ch["Notes"].ColumnNumber].Hyperlink != null)

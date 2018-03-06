@@ -191,7 +191,7 @@ namespace Lava3.Core
                 //Validation
                 if (current.YearlyBalence.Value != current.Balence.Value)
                 {
-                    string msg = $"Balance and Yearly Balence do not match {current.Balence} != {current.YearlyBalence}";
+                    string msg = $"{Resources.Validation_BalancesNotMatch} {current.Balence} != {current.YearlyBalence}";
                     current.YearlyBalence.Errors.Add(msg);
                     current.Balence.Errors.Add(msg);
                 }
@@ -227,9 +227,9 @@ namespace Lava3.Core
                 IsMonthlySummary = true,
                 IsDivider = false,
                 RowNumber = NewRowNumber,
-                Notes = new ColumnString() { ColumnNumber = ch["Notes"].ColumnNumber },
-                Debit = new ColumnDecimal() { ColumnNumber = ch["Debit"].ColumnNumber, Value = 0 },
-                Credit = new ColumnDecimal() { ColumnNumber = ch["Credit"].ColumnNumber, Value = 0 }
+                Notes = new ColumnString() { ColumnNumber = ch[Resources.ColumnHeader_Notes].ColumnNumber },
+                Debit = new ColumnDecimal() { ColumnNumber = ch[Resources.ColumnHeader_Debit].ColumnNumber, Value = 0 },
+                Credit = new ColumnDecimal() { ColumnNumber = ch[Resources.ColumnHeader_Credit].ColumnNumber, Value = 0 }
             };
 
             retval.Add(monthSummary);
@@ -240,7 +240,6 @@ namespace Lava3.Core
                 IsMonthlySummary = false,
                 IsDivider = true,
                 RowNumber = NewRowNumber
-                //, Notes = new ColumnString() { ColumnNumber = ch["Notes"].ColumnNumber }
             });
             NewRowNumber++;
 
@@ -329,18 +328,18 @@ namespace Lava3.Core
             int rownum = 2;
             while (rownum <= _SheetCategories.Dimension.Rows)
             {
-                ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns["Description"]);
+                ColumnString description = new ColumnString(_SheetCategories, rownum, CategoryColumns[Resources.ColumnHeader_Description]);
                 if (!string.IsNullOrEmpty(description.Value))
                 {
                     var row = new Category()
                     {
                         Description = description,
-                        AccountingCategory = new ColumnString(_SheetCategories, rownum, CategoryColumns["Category"]),
-                        Notes = new ColumnString(_SheetCategories, rownum, CategoryColumns["Notes"])
+                        AccountingCategory = new ColumnString(_SheetCategories, rownum, CategoryColumns[Resources.ColumnHeader_Category]),
+                        Notes = new ColumnString(_SheetCategories, rownum, CategoryColumns[Resources.ColumnHeader_Notes])
                     };
-                    if (_SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink != null)
+                    if (_SheetCategories.Cells[rownum, CategoryColumns[Resources.ColumnHeader_Notes].ColumnNumber].Hyperlink != null)
                     {
-                        row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns["Notes"].ColumnNumber].Hyperlink;
+                        row.NotesHyperLink = _SheetCategories.Cells[rownum, CategoryColumns[Resources.ColumnHeader_Notes].ColumnNumber].Hyperlink;
                     }
 
                     accountingCategories.Add(row);
@@ -349,7 +348,7 @@ namespace Lava3.Core
             }
             if (!accountingCategories.Any())
             {
-                throw new IndexOutOfRangeException("No Categories could be found");
+                throw new IndexOutOfRangeException(Resources.Error_NoCategoriesCouldBeFound);
             }
             //Sort by description
             accountingCategories = accountingCategories.OrderBy(o => o.Description.Value).ToList();
@@ -486,17 +485,17 @@ namespace Lava3.Core
                     string path = Path.GetFullPath(Path.Combine(Package.File.Directory.FullName, cell.Hyperlink.OriginalString));
                     if (!File.Exists(path))
                     {
-                        Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Can not resolve hyperlink.", Common.Colours.ErrorColour);
+                        Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, Resources.Validation_CannotResolveHyperLink, Common.Colours.ErrorColour);
                     }
                 }
 
                 if (item.IsDuplicateDescription)
                 {
-                    Common.SetComment(_SheetCategories, rownum, item.Description.ColumnNumber, "Duplicate description.", Common.Colours.DuplicateColour);
+                    Common.SetComment(_SheetCategories, rownum, item.Description.ColumnNumber, Resources.Validation_DuplicateDescription, Common.Colours.DuplicateColour);
                 }
                 if (item.IsDuplicateNotes)
                 {
-                    Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, "Duplicate notes.", Common.Colours.DuplicateColour);
+                    Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber,Resources.Validation_DuplicateNotes, Common.Colours.DuplicateColour);
                 }
             }
         }
@@ -556,7 +555,7 @@ namespace Lava3.Core
             foreach (CurrentAccount item in CurrentAccountRows)
             {
                 rownum++;
-                string CategoryMissing = "Category missing";
+                string CategoryMissing = Resources.Validation_CategoryMissing;
                 if (item.IsStartingBalence)
                 {
                     Common.SetRowColour(_SheetCurrentAccount, rownum, lastColumnNumber, Common.Colours.StartingBalance, true);
@@ -671,7 +670,7 @@ namespace Lava3.Core
             foreach (CurrentAccount item in caRows.Where(w => !SummaryHeaders.Any(a => a.Equals(w.Category.Value, StringComparison.CurrentCultureIgnoreCase))))
             {
                 if (item.Description != null &&
-                    item.Description.Value.Equals("COMMERCIAL CARD", StringComparison.CurrentCultureIgnoreCase))
+                    item.Description.Value.Equals(Resources.Category_CommercialCard, StringComparison.CurrentCultureIgnoreCase))
                     continue;
 
                 if (item.Category == null || string.IsNullOrEmpty(item.Category.Value))
@@ -759,8 +758,8 @@ namespace Lava3.Core
             Common.UpdateCellString(_SheetAnnualSummary, rownum,
                                     new ColumnString()
                                     {
-                                        ColumnNumber = chExpences["V.A.T."].ColumnNumber,
-                                        Value = "If applicable"
+                                        ColumnNumber = chExpences[Resources.ColumnHeader_VAT].ColumnNumber,
+                                        Value = Resources.IfApplicable
                                     },
                                     "",
                                     false);
@@ -793,7 +792,7 @@ namespace Lava3.Core
             rownum += 2;
 
             //Expenses Total row
-            _SheetAnnualSummary.Cells[rownum, chExpences["Description"].ColumnNumber].Value = eDescriptionKeys.Totals;
+            _SheetAnnualSummary.Cells[rownum, chExpences[Resources.ColumnHeader_Description].ColumnNumber].Value = eDescriptionKeys.Totals;
             for (int i = 3; i <= chExpences.Count(); i++)
             {
                 Common.SetTotal(_SheetAnnualSummary, rownum, firstExpenseRow, i);
@@ -837,11 +836,11 @@ namespace Lava3.Core
             }
             rownum += 2;
             ////Invoice Total Row
-            _SheetAnnualSummary.Cells[rownum, chInvoices["Customer"].ColumnNumber].Value = eDescriptionKeys.Totals;
+            _SheetAnnualSummary.Cells[rownum, chInvoices[Resources.ColumnHeader_Customer].ColumnNumber].Value = eDescriptionKeys.Totals;
             Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices[SalesInvoicesColumnheaderText.HoursInvoiced].ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Days Invoiced"].ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Invoice Amount"].ColumnNumber);
-            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices["Total Paid"].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices[Resources.ColumnHeader_DaysInvoiced].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices[Resources.ColumnHeader_InvoiceAmount].ColumnNumber);
+            Common.SetTotal(_SheetAnnualSummary, rownum, FirstInvoiceRow, chInvoices[Resources.ColumnHeader_TotalPaid].ColumnNumber);
             Common.SetRowColour(_SheetAnnualSummary, rownum, LastInvoiceColumnNumber, Common.Colours.TotalsColour, true);
             #endregion
 
@@ -850,50 +849,50 @@ namespace Lava3.Core
             int colValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].ColumnNumber;
             string colLetterValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].GetColumnLetter();
             int availableDays = 252;
-            int subsistanceDays = caRows.Where(w => w.Category.Value.Equals("Subsistence")).GroupBy(g => g.Date).ToArray().Count();
+            int subsistanceDays = caRows.Where(w => w.Category.Value.Equals(Resources.SumaryLabel_Subsistence)).GroupBy(g => g.Date).ToArray().Count();
 
             rownum += 2;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Invoiced days");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.SummaryLabel_InvoicedDays   );
             Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2}");
             int invoicedDaysRow = rownum;
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Available days");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_AvailableDays);
             Common.UpdateCellInt(_SheetAnnualSummary, rownum, colValue, availableDays, false, 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage worked");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageWorked);
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
                                                     , rownum - 2, colLetterValue
                                                     , rownum - 1, colLetterValue);
             rownum += 2;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Driven");
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, "='Car Mileage'!K4", 0);
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysDriven);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"='{Resources.WorkSheetLabel_CarMilage}'!K4", 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Driven");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageDriven);
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
                                                     , rownum - 1, colLetterValue
                                                     , invoicedDaysRow, colLetterValue);
 
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Train");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysTrain);
             Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 2},0)", 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Train");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageTrain );
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
                                                     , rownum - 1, colLetterValue
                                                     , invoicedDaysRow, colLetterValue);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Traveled");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysTraveled);
             Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2} + {colLetterValue}{rownum - 4}", 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Percentage Traveled");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageTraveled);
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
                                                     , rownum - 1, colLetterValue
                                                     , invoicedDaysRow, colLetterValue);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Subsistance card");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysSubsistanceCard);
             Common.UpdateCellInt(_SheetAnnualSummary, rownum, colValue, subsistanceDays, false, 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, "Days Subsistance (cash)");
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysSubsistanceCash);
             Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 1},0)", 0);
 
             #endregion
@@ -903,15 +902,15 @@ namespace Lava3.Core
 
         public static class SalesInvoicesColumnheaderText
         {
-            public static string Customer { get { return "Customer"; } }
-            public static string Invoice { get { return "Invoice"; } }
-            public static string InvoiceDate { get { return "Invoice Date"; } }
-            public static string DateFundsRecieved { get { return "Date Funds Recieved"; } }
-            public static string DaysToPay { get { return "Days to pay"; } }
-            public static string HoursInvoiced { get { return "Hours Invoiced"; } }
-            public static string DaysInvoiced { get { return "Days Invoiced"; } }
-            public static string TotalPaid { get { return "Total Paid"; } }
-            public static string DayRate { get { return "Day Rate"; } }
+            public static string Customer { get { return Resources.ColumnHeader_Customer; } }
+            public static string Invoice { get { return Resources.ColumnHeader_Invoice; } }
+            public static string InvoiceDate { get { return Resources.ColumnHeader_InvoiceDate; } }
+            public static string DateFundsRecieved { get { return Resources.ColumnHeader_DateFundsRecieved; } }
+            public static string DaysToPay { get { return Resources.ColumnHeader_DaysToPay; } }
+            public static string HoursInvoiced { get { return Resources.ColumnHeader_HoursInvoiced; } }
+            public static string DaysInvoiced { get { return Resources.ColumnHeader_DaysInvoiced; } }
+            public static string TotalPaid { get { return Resources.ColumnHeader_TotalPaid; } }
+            public static string DayRate { get { return Resources.ColumnHeader_DayRate; } }
         }
     }
 }

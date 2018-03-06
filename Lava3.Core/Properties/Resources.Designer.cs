@@ -61,11 +61,74 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to COMMERCIAL CARD.
+        /// </summary>
+        internal static string Category_CommercialCard {
+            get {
+                return ResourceManager.GetString("Category_CommercialCard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Category.
+        /// </summary>
+        internal static string ColumnHeader_Category {
+            get {
+                return ResourceManager.GetString("ColumnHeader_Category", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Credit.
         /// </summary>
         internal static string ColumnHeader_Credit {
             get {
                 return ResourceManager.GetString("ColumnHeader_Credit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Customer.
+        /// </summary>
+        internal static string ColumnHeader_Customer {
+            get {
+                return ResourceManager.GetString("ColumnHeader_Customer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Date Funds Recieved.
+        /// </summary>
+        internal static string ColumnHeader_DateFundsRecieved {
+            get {
+                return ResourceManager.GetString("ColumnHeader_DateFundsRecieved", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Day Rate.
+        /// </summary>
+        internal static string ColumnHeader_DayRate {
+            get {
+                return ResourceManager.GetString("ColumnHeader_DayRate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Invoiced.
+        /// </summary>
+        internal static string ColumnHeader_DaysInvoiced {
+            get {
+                return ResourceManager.GetString("ColumnHeader_DaysInvoiced", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days to pay.
+        /// </summary>
+        internal static string ColumnHeader_DaysToPay {
+            get {
+                return ResourceManager.GetString("ColumnHeader_DaysToPay", resourceCulture);
             }
         }
         
@@ -79,11 +142,74 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Description.
+        /// </summary>
+        internal static string ColumnHeader_Description {
+            get {
+                return ResourceManager.GetString("ColumnHeader_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Hours Invoiced.
+        /// </summary>
+        internal static string ColumnHeader_HoursInvoiced {
+            get {
+                return ResourceManager.GetString("ColumnHeader_HoursInvoiced", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invoice.
+        /// </summary>
+        internal static string ColumnHeader_Invoice {
+            get {
+                return ResourceManager.GetString("ColumnHeader_Invoice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invoice Amount.
+        /// </summary>
+        internal static string ColumnHeader_InvoiceAmount {
+            get {
+                return ResourceManager.GetString("ColumnHeader_InvoiceAmount", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invoice Date.
+        /// </summary>
+        internal static string ColumnHeader_InvoiceDate {
+            get {
+                return ResourceManager.GetString("ColumnHeader_InvoiceDate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Notes.
         /// </summary>
         internal static string ColumnHeader_Notes {
             get {
                 return ResourceManager.GetString("ColumnHeader_Notes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total Paid.
+        /// </summary>
+        internal static string ColumnHeader_TotalPaid {
+            get {
+                return ResourceManager.GetString("ColumnHeader_TotalPaid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to V.A.T..
+        /// </summary>
+        internal static string ColumnHeader_VAT {
+            get {
+                return ResourceManager.GetString("ColumnHeader_VAT", resourceCulture);
             }
         }
         
@@ -97,7 +223,7 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH&quot;.
+        ///   Looks up a localized string similar to PAYMENTS MADE BY DIRECTOR PRIVATELY/CASH.
         /// </summary>
         internal static string DescriptionKey_Expenses {
             get {
@@ -142,6 +268,123 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to If applicable.
+        /// </summary>
+        internal static string IfApplicable {
+            get {
+                return ResourceManager.GetString("IfApplicable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Subsistence.
+        /// </summary>
+        internal static string SumaryLabel_Subsistence {
+            get {
+                return ResourceManager.GetString("SumaryLabel_Subsistence", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Available days.
+        /// </summary>
+        internal static string Summary_AvailableDays {
+            get {
+                return ResourceManager.GetString("Summary_AvailableDays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Driven.
+        /// </summary>
+        internal static string Summary_DaysDriven {
+            get {
+                return ResourceManager.GetString("Summary_DaysDriven", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Subsistance (card).
+        /// </summary>
+        internal static string Summary_DaysSubsistanceCard {
+            get {
+                return ResourceManager.GetString("Summary_DaysSubsistanceCard", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Subsistance (cash).
+        /// </summary>
+        internal static string Summary_DaysSubsistanceCash {
+            get {
+                return ResourceManager.GetString("Summary_DaysSubsistanceCash", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Train.
+        /// </summary>
+        internal static string Summary_DaysTrain {
+            get {
+                return ResourceManager.GetString("Summary_DaysTrain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Days Traveled.
+        /// </summary>
+        internal static string Summary_DaysTraveled {
+            get {
+                return ResourceManager.GetString("Summary_DaysTraveled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Percentage Driven.
+        /// </summary>
+        internal static string Summary_PercentageDriven {
+            get {
+                return ResourceManager.GetString("Summary_PercentageDriven", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Percentage Train.
+        /// </summary>
+        internal static string Summary_PercentageTrain {
+            get {
+                return ResourceManager.GetString("Summary_PercentageTrain", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Percentage Traveled.
+        /// </summary>
+        internal static string Summary_PercentageTraveled {
+            get {
+                return ResourceManager.GetString("Summary_PercentageTraveled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Percentage worked.
+        /// </summary>
+        internal static string Summary_PercentageWorked {
+            get {
+                return ResourceManager.GetString("Summary_PercentageWorked", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invoiced days.
+        /// </summary>
+        internal static string SummaryLabel_InvoicedDays {
+            get {
+                return ResourceManager.GetString("SummaryLabel_InvoicedDays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Banks balance and calculated balance do not match.
         /// </summary>
         internal static string Validation_BalancesNotMatch {
@@ -160,7 +403,7 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to CategoryMissing.
+        ///   Looks up a localized string similar to Category Missing.
         /// </summary>
         internal static string Validation_CategoryMissing {
             get {

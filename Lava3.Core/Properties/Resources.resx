@@ -117,14 +117,56 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Category_CommercialCard" xml:space="preserve">
+    <value>COMMERCIAL CARD</value>
+  </data>
+  <data name="ColumnHeader_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
   <data name="ColumnHeader_Credit" xml:space="preserve">
     <value>Credit</value>
+  </data>
+  <data name="ColumnHeader_Customer" xml:space="preserve">
+    <value>Customer</value>
+  </data>
+  <data name="ColumnHeader_DateFundsRecieved" xml:space="preserve">
+    <value>Date Funds Recieved</value>
+  </data>
+  <data name="ColumnHeader_DayRate" xml:space="preserve">
+    <value>Day Rate</value>
+  </data>
+  <data name="ColumnHeader_DaysInvoiced" xml:space="preserve">
+    <value>Days Invoiced</value>
+  </data>
+  <data name="ColumnHeader_DaysToPay" xml:space="preserve">
+    <value>Days to pay</value>
   </data>
   <data name="ColumnHeader_Debit" xml:space="preserve">
     <value>Debit</value>
   </data>
+  <data name="ColumnHeader_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="ColumnHeader_HoursInvoiced" xml:space="preserve">
+    <value>Hours Invoiced</value>
+  </data>
+  <data name="ColumnHeader_Invoice" xml:space="preserve">
+    <value>Invoice</value>
+  </data>
+  <data name="ColumnHeader_InvoiceAmount" xml:space="preserve">
+    <value>Invoice Amount</value>
+  </data>
+  <data name="ColumnHeader_InvoiceDate" xml:space="preserve">
+    <value>Invoice Date</value>
+  </data>
   <data name="ColumnHeader_Notes" xml:space="preserve">
     <value>Notes</value>
+  </data>
+  <data name="ColumnHeader_TotalPaid" xml:space="preserve">
+    <value>Total Paid</value>
+  </data>
+  <data name="ColumnHeader_VAT" xml:space="preserve">
+    <value>V.A.T.</value>
   </data>
   <data name="DescriptionKey_BalanceAtStartOfYear" xml:space="preserve">
     <value>Balance At start of year</value>
@@ -144,6 +186,45 @@
   <data name="Error_NoCategoriesCouldBeFound" xml:space="preserve">
     <value>No Categories could be found</value>
   </data>
+  <data name="IfApplicable" xml:space="preserve">
+    <value>If applicable</value>
+  </data>
+  <data name="SumaryLabel_Subsistence" xml:space="preserve">
+    <value>Subsistence</value>
+  </data>
+  <data name="SummaryLabel_InvoicedDays" xml:space="preserve">
+    <value>Invoiced days</value>
+  </data>
+  <data name="Summary_AvailableDays" xml:space="preserve">
+    <value>Available days</value>
+  </data>
+  <data name="Summary_DaysDriven" xml:space="preserve">
+    <value>Days Driven</value>
+  </data>
+  <data name="Summary_DaysSubsistanceCard" xml:space="preserve">
+    <value>Days Subsistance (card)</value>
+  </data>
+  <data name="Summary_DaysSubsistanceCash" xml:space="preserve">
+    <value>Days Subsistance (cash)</value>
+  </data>
+  <data name="Summary_DaysTrain" xml:space="preserve">
+    <value>Days Train</value>
+  </data>
+  <data name="Summary_DaysTraveled" xml:space="preserve">
+    <value>Days Traveled</value>
+  </data>
+  <data name="Summary_PercentageDriven" xml:space="preserve">
+    <value>Percentage Driven</value>
+  </data>
+  <data name="Summary_PercentageTrain" xml:space="preserve">
+    <value>Percentage Train</value>
+  </data>
+  <data name="Summary_PercentageTraveled" xml:space="preserve">
+    <value>Percentage Traveled</value>
+  </data>
+  <data name="Summary_PercentageWorked" xml:space="preserve">
+    <value>Percentage worked</value>
+  </data>
   <data name="Validation_BalancesNotMatch" xml:space="preserve">
     <value>Banks balance and calculated balance do not match</value>
   </data>
@@ -151,7 +232,7 @@
     <value>Can not resolve hyperlink.</value>
   </data>
   <data name="Validation_CategoryMissing" xml:space="preserve">
-    <value>CategoryMissing</value>
+    <value>Category Missing</value>
   </data>
   <data name="Validation_DuplicateDescription" xml:space="preserve">
     <value>Duplicate description.</value>

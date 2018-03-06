@@ -495,7 +495,7 @@ namespace Lava3.Core
                 }
                 if (item.IsDuplicateNotes)
                 {
-                    Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber,Resources.Validation_DuplicateNotes, Common.Colours.DuplicateColour);
+                    Common.SetComment(_SheetCategories, rownum, item.Notes.ColumnNumber, Resources.Validation_DuplicateNotes, Common.Colours.DuplicateColour);
                 }
             }
         }
@@ -509,9 +509,22 @@ namespace Lava3.Core
 
             Common.DeleteRows(_SheetCreditCard, 2);
             int rownum = 1;
+            DateTime? PreviousRowStatementDate = null;
+            bool ChangeBackground = false;
+
+            int EndOfColumns = CreditCardRows.First().Notes.ColumnNumber;
             foreach (CreditCard item in CreditCardRows)
             {
                 rownum++;
+                if(PreviousRowStatementDate != item.StatementDate.Value)
+                {
+                    ChangeBackground = !ChangeBackground;
+                }
+
+                if (  ChangeBackground)
+                {
+                    Common.SetRowColour(_SheetCreditCard, rownum,EndOfColumns, Color.Teal, false);
+                }
                 Common.UpdateCellDate(_SheetCreditCard, rownum, item.PaidDate);
                 Common.UpdateCellDate(_SheetCreditCard, rownum, item.StatementDate);
                 Common.UpdateCellDate(_SheetCreditCard, rownum, item.TransactionDate);
@@ -522,6 +535,8 @@ namespace Lava3.Core
                 Common.UpdateCellDecimal(_SheetCreditCard, rownum, item.Postage);
                 Common.UpdateHyperLink(_SheetCreditCard, rownum, item.Notes, item.NotesHyperLink, stylenameHyperlink, Package.File.DirectoryName);
 
+
+                PreviousRowStatementDate = item.StatementDate.Value;
             }
             //Create conditional formating
             int categoryColumn = CreditCardRows.First().Category.ColumnNumber;
@@ -852,7 +867,7 @@ namespace Lava3.Core
             int subsistanceDays = caRows.Where(w => w.Category.Value.Equals(Resources.Summary_Subsistence)).GroupBy(g => g.Date).ToArray().Count();
 
             rownum += 2;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_InvoicedDays   );
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_InvoicedDays);
             Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2}");
             int invoicedDaysRow = rownum;
             rownum++;
@@ -876,7 +891,7 @@ namespace Lava3.Core
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysTrain);
             Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"=RoundUp({colLetterValue}{invoicedDaysRow} - {colLetterValue}{rownum - 2},0)", 0);
             rownum++;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageTrain );
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageTrain);
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue
                                                     , rownum - 1, colLetterValue
                                                     , invoicedDaysRow, colLetterValue);

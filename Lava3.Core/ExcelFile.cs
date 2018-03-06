@@ -80,7 +80,7 @@ namespace Lava3.Core
         {
             if (!File.Exists(path))
             {
-                throw new FileNotFoundException($"Excel file could not be found '{path}'.");
+                throw new FileNotFoundException($"{Resources.Error_ExcelFileCouldNotBeFound} '{path}'.");
             }
             Process openFile = new Process();
             Process.Start(path);
@@ -849,10 +849,10 @@ namespace Lava3.Core
             int colValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].ColumnNumber;
             string colLetterValue = chInvoices[SalesInvoicesColumnheaderText.DaysInvoiced].GetColumnLetter();
             int availableDays = 252;
-            int subsistanceDays = caRows.Where(w => w.Category.Value.Equals(Resources.SumaryLabel_Subsistence)).GroupBy(g => g.Date).ToArray().Count();
+            int subsistanceDays = caRows.Where(w => w.Category.Value.Equals(Resources.Summary_Subsistence)).GroupBy(g => g.Date).ToArray().Count();
 
             rownum += 2;
-            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.SummaryLabel_InvoicedDays   );
+            Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_InvoicedDays   );
             Common.AddFormulaDecimal(_SheetAnnualSummary, rownum, colValue, $"={colLetterValue}{rownum - 2}");
             int invoicedDaysRow = rownum;
             rownum++;

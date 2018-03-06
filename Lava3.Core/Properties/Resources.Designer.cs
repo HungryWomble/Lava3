@@ -259,6 +259,15 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Excel file could not be found.
+        /// </summary>
+        internal static string Error_ExcelFileCouldNotBeFound {
+            get {
+                return ResourceManager.GetString("Error_ExcelFileCouldNotBeFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No Categories could be found.
         /// </summary>
         internal static string Error_NoCategoriesCouldBeFound {
@@ -273,15 +282,6 @@ namespace Lava3.Core.Properties {
         internal static string IfApplicable {
             get {
                 return ResourceManager.GetString("IfApplicable", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Subsistence.
-        /// </summary>
-        internal static string SumaryLabel_Subsistence {
-            get {
-                return ResourceManager.GetString("SumaryLabel_Subsistence", resourceCulture);
             }
         }
         
@@ -340,6 +340,15 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Invoiced days.
+        /// </summary>
+        internal static string Summary_InvoicedDays {
+            get {
+                return ResourceManager.GetString("Summary_InvoicedDays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Percentage Driven.
         /// </summary>
         internal static string Summary_PercentageDriven {
@@ -376,11 +385,11 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invoiced days.
+        ///   Looks up a localized string similar to Subsistence.
         /// </summary>
-        internal static string SummaryLabel_InvoicedDays {
+        internal static string Summary_Subsistence {
             get {
-                return ResourceManager.GetString("SummaryLabel_InvoicedDays", resourceCulture);
+                return ResourceManager.GetString("Summary_Subsistence", resourceCulture);
             }
         }
         

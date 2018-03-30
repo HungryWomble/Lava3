@@ -880,7 +880,7 @@ namespace Lava3.Core
                                                     , rownum - 1, colLetterValue);
             rownum += 2;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_DaysDriven);
-            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"='{Resources.WorkSheetLabel_CarMilage}'!K4", 0);
+            Common.AddFormula(_SheetAnnualSummary, rownum, colValue, $"='{Resources.WorkSheetLabel_CarMilage}'!L4", 0);
             rownum++;
             Common.UpdateCellString(_SheetAnnualSummary, rownum, colText, Resources.Summary_PercentageDriven);
             Common.AddFormulaPercentage(_SheetAnnualSummary, rownum, colValue

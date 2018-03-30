@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Lava3.Core.DataTypes;
+using Lava3.Core.Properties;
 using OfficeOpenXml;
 
 namespace Lava3.Core.Model
@@ -105,7 +106,7 @@ namespace Lava3.Core.Model
                 if (c.Any())
                 {
                     foreach (Category item in categories.Where(w => !w.Description.Value
-                                                                      .Equals("dont map", StringComparison.CurrentCultureIgnoreCase)))
+                                                                      .Equals(Resources.DontMap, StringComparison.CurrentCultureIgnoreCase)))
                     {
                         var regex = new Regex(item.RegEx.Value, RegexOptions.IgnoreCase);
                         if (regex.Match(Description.Value).Length > 0)
@@ -159,14 +160,14 @@ namespace Lava3.Core.Model
                     Category.Value = sb.ToString().TrimEnd('\r', '\n');
                     if (HasNoCategory)
                     {
-                        Category.Errors.Add("One or more transactions have not been categorised.");
+                        Category.Errors.Add(Resources.OneOrMoreTransactionsHaveNotBeenCategorised);
                     }
                 }
                 CreditCardTransactions = ccTransactions;
 
             }
             else if (localCategory != null &&
-                    !localCategory.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))
+                    !localCategory.Description.Value.Equals(Resources.DontMap, StringComparison.CurrentCultureIgnoreCase))
             {
                 Category = Common.ReplaceIfEmpty(Category, localCategory.AccountingCategory);
                 //TransactionDescription = category.Description;
@@ -178,8 +179,8 @@ namespace Lava3.Core.Model
             }
              if (localCategory != null)
             {
-                IsDontMap = Category.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase);
-                IsInvoicePaid = Category.Value.Equals("invoice paid", StringComparison.CurrentCultureIgnoreCase);
+                IsDontMap = Category.Value.Equals(Resources.DontMap, StringComparison.CurrentCultureIgnoreCase);
+                IsInvoicePaid = Category.Value.Equals(Resources.InvoicePaid, StringComparison.CurrentCultureIgnoreCase);
             }
 
         }

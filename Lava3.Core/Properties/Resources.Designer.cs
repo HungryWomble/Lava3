@@ -259,6 +259,15 @@ namespace Lava3.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Dont Map.
+        /// </summary>
+        internal static string DontMap {
+            get {
+                return ResourceManager.GetString("DontMap", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Excel file could not be found.
         /// </summary>
         internal static string Error_ExcelFileCouldNotBeFound {
@@ -282,6 +291,24 @@ namespace Lava3.Core.Properties {
         internal static string IfApplicable {
             get {
                 return ResourceManager.GetString("IfApplicable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to invoice paid.
+        /// </summary>
+        internal static string InvoicePaid {
+            get {
+                return ResourceManager.GetString("InvoicePaid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to One or more transactions have not been categorised..
+        /// </summary>
+        internal static string OneOrMoreTransactionsHaveNotBeenCategorised {
+            get {
+                return ResourceManager.GetString("OneOrMoreTransactionsHaveNotBeenCategorised", resourceCulture);
             }
         }
         

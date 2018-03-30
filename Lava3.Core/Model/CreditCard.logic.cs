@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using OfficeOpenXml;
 using System.Text.RegularExpressions;
 using Lava3.Core.DataTypes;
+using Lava3.Core.Properties;
 
 namespace Lava3.Core.Model
 {
@@ -67,7 +68,7 @@ namespace Lava3.Core.Model
                 if (c.Any())
                 {
                     foreach (Category item in categories.Where(w => !w.Description.Value
-                                                                      .Equals("dont map", StringComparison.CurrentCultureIgnoreCase)))
+                                                                      .Equals(Resources.DontMap, StringComparison.CurrentCultureIgnoreCase)))
                     {
                         var regex = new Regex(item.RegEx.Value, RegexOptions.IgnoreCase);
                         if (regex.Match(TransactionDescription.Value).Length > 0)
@@ -85,7 +86,7 @@ namespace Lava3.Core.Model
 
             if (localCategory != null)
             {
-                if (!localCategory.Description.Value.Equals("Dont Map", StringComparison.CurrentCultureIgnoreCase))
+                if (!localCategory.Description.Value.Equals(Resources.DontMap, StringComparison.CurrentCultureIgnoreCase))
                 {
                     Category = Common.ReplaceIfEmpty(Category, localCategory.AccountingCategory);
                     //TransactionDescription = category.Description;

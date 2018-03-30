@@ -183,6 +183,9 @@
   <data name="DescriptionKey_Totals" xml:space="preserve">
     <value>Totals</value>
   </data>
+  <data name="DontMap" xml:space="preserve">
+    <value>Dont Map</value>
+  </data>
   <data name="Error_ExcelFileCouldNotBeFound" xml:space="preserve">
     <value>Excel file could not be found</value>
   </data>
@@ -191,6 +194,12 @@
   </data>
   <data name="IfApplicable" xml:space="preserve">
     <value>If applicable</value>
+  </data>
+  <data name="InvoicePaid" xml:space="preserve">
+    <value>invoice paid</value>
+  </data>
+  <data name="OneOrMoreTransactionsHaveNotBeenCategorised" xml:space="preserve">
+    <value>One or more transactions have not been categorised.</value>
   </data>
   <data name="Summary_AvailableDays" xml:space="preserve">
     <value>Available days</value>
